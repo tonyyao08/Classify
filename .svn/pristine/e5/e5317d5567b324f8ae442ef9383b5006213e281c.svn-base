@@ -1,0 +1,224 @@
+# written in top-down design approach
+import boto3
+import json
+from os.path import exists
+import requests
+
+
+# hard-coded fields created from aws
+bucket_name = "mycoins"
+api_key = "da2-tkzuvhzfe5etrmisvfchmr7sia"
+url = 'https://ztgryu55q5hs3o6tff5lh3qovq.appsync-api.us-east-1.amazonaws.com/graphql'
+
+
+# intialize clients to communicate with aws services
+s3 = boto3.client('s3')
+rekognition = boto3.client("rekognition")
+
+
+###########################################################################
+# run train mode if pi passes in true, otherwise run classify mode
+
+
+def handler(image_path, project_id):
+    # local databases unique to each project
+    label_database = project_id + "-label.json"
+    bucket_database = project_id + "-bucket.json"
+# if database doesn't exist, create databases
+    if exists(bucket_database) == False:
+        initalize_databases(label_database, bucket_database)
+    train_handler(project_id, label_database)
+    classify_handler(image_path, project_id, label_database, bucket_database)
+
+###########################################################################
+# on startup, create databases if needed for new projects
+
+
+def initalize_databases(label_database, bucket_database):
+    empty_json = []
+    with open(label_database, 'w') as f:
+        json.dump(empty_json, f, indent=4)
+
+    with open(bucket_database, 'w') as f:
+        json.dump(empty_json, f, indent=4)
+
+###########################################################################
+# update our local labels database from webapp prior to classification
+
+
+def train_handler(project_id, label_database):
+    # use project id to get these bucket items from below query
+    bucket_items = """\n    items {
+        label
+        rekognitionMeta
+        }
+    }
+    }
+    """
+    query_bucket_items = ("query {\n" +
+                          "  listImages(filter: {userGenerated: {eq: true}, projectID: {eq: \"" +
+                          project_id + "\"}}) { ") + bucket_items
+
+    bucket_data = run_query(query_bucket_items, api_key, url)
+    user_labels = bucket_data.get("data").get("listImages")
+    with open(label_database, 'w') as f:
+        json.dump(user_labels, f, indent=4)
+
+###########################################################################
+# helper function to run a post query request
+
+
+def run_query(query, api_key, url):
+    data = {"query": query}
+    json_data = json.dumps(data)
+    header = {"X-API-Key": api_key}
+
+    response = requests.post(url=url, headers=header, data=json_data)
+    return json.loads(response.text)
+
+# detect text from images, try matching to labels and place images in a bucket
+###########################################################################
+
+
+def classify_handler(image_path, project_id, label_database, bucket_database):
+    # get image name from full image path given
+    image_name = image_path.rsplit('/', 1)[1]
+    flipped_image_name = image_name.split('.')[0] + "_flipped.jpg"
+
+    # detect text for both images, merge them into all detected text
+    original_detected_text = detect_text(image_name, bucket_name)
+    flipped_detected_text = detect_text(flipped_image_name, bucket_name)
+    all_detected_text = original_detected_text + flipped_detected_text
+
+    # check if detected text matches an existing label
+    try:
+        map_image_to_label(all_detected_text, image_name,
+                           label_database, bucket_database, project_id)
+    except Exception as e:
+        print(e)
+
+###########################################################################
+# Utility functions for performming ML/database operations below
+# upload an image to our s3 bucket
+
+
+def upload_to_s3(image_path, image_name):
+    try:
+        s3.upload_file(image_path, bucket_name, image_name)
+    except Exception as e:
+        print(e)
+
+###########################################################################
+# detect text from a given image
+
+
+def detect_text(photo, s3_bucket):
+    response = rekognition.detect_text(
+        Image={"S3Object": {"Bucket": s3_bucket, "Name": photo}})
+    textDetections = response["TextDetections"]
+    text_arr = []
+    for text in textDetections:
+        # only include text with over 75% confidence level
+        if (text["Confidence"]) > 75:
+            text_arr.append(text["DetectedText"])
+
+    return text_arr
+
+###########################################################################
+# check if an images detected text can be mapped to a label/bucket
+
+
+def map_image_to_label(detect_text_response, image_name, label_database, bucket_database, project_id):
+    with open(label_database) as lf:
+        labels_list = json.load(lf)
+
+    with open(bucket_database) as pf:
+        prev_database = json.load(pf)
+
+    label_name = "Unknown"
+    labels = labels_list.get("items")
+    for entry in labels:
+        user_text_arr = entry.get("rekognitionMeta")
+        for user_text in user_text_arr:
+            for detected_text in detect_text_response:
+                # call our own function used for matching similar text
+                if match_text(user_text.upper(), detected_text):
+                    label_name = entry.get("label")
+
+    new_bucket = {image_name: label_name}
+    prev_database.append(new_bucket)
+    # update local database with matching image name and label
+    with open(bucket_database, 'w', encoding='utf-8') as f:
+        json.dump(prev_database, f, indent=4)
+    # update webapp with image and new label
+    print(label_name)
+    create_image_query = send_web_image_classification_query(
+        image_name, project_id, label_name, "false")
+
+    data = {"query": create_image_query}
+    json_data = json.dumps(data)
+    header = {'X-API-Key': api_key}
+    response = requests.post(url=url, headers=header, data=json_data)
+    print(response)
+    print('sent classification to s3')
+
+###########################################################################
+# match similar words to allow for one off errors based off word length
+
+
+def match_text(s1, s2):
+    if s1 == s2:
+        return True
+    else:
+        # convert words to char array to check for one off errors
+        char_array1 = [char for char in s1]
+        char_array2 = [char for char in s2]
+        # get smallest and biggest length
+        l1 = len(char_array1)
+        l2 = len(char_array2)
+        min_length = l1 if l1 < l2 else l2
+        max_length = l1 if l1 > l2 else l2
+        # initalize number of mismatched chars to difference between lengths
+        mismatch_count = max_length - min_length
+        # accept one or more errors for words with > 4 characters
+        if min_length < 5:
+            return False
+        return close_enough(char_array1, char_array2, min_length, mismatch_count)
+
+# check if 2 words are close enough to be counted as the same
+
+###########################################################################
+
+
+def close_enough(c1, c2, min_length, mismatch_count):
+    # count occurences of mismatched characters
+    for i in range(min_length):
+        if c1[i] != c2[i]:
+            mismatch_count += 1
+    # accept 1 mismatch for words with length > 4 and < 8
+    if min_length < 8:
+        return True if mismatch_count <= 1 else False
+    else:  # accept 2 mismatches for words with length >= 8
+        return True if mismatch_count <= 2 else False
+
+###########################################################################
+
+
+def send_web_image_classification_query(image_name, proj_id, label_name, user_generated):
+    final_image = image_name# + ".jpg"
+    create_image_query = f"""mutation {{ 
+            createImage(input: {{imageKey: "{final_image}", projectID: "{proj_id}", label: "{label_name}", userGenerated: {user_generated}}}) {{ 
+                id 
+                _version
+                createdAt
+                updatedAt
+                _lastChangedAt
+                projectID
+                _deleted
+                imageKey
+                label
+                rekognitionMeta
+                userGenerated
+            }}
+            }}"""
+    return create_image_query

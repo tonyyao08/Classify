@@ -1,0 +1,13 @@
+<div class="authenticator" *ngIf="authenticator.route !== 'authenticated'">
+  <h1>Parts Classifier</h1>
+  <amplify-authenticator>
+    <!-- <ng-template amplifySlot="authenticated" let-user="user" let-signOut="signOut">
+      <h1>Welcome {{ user.attributes.name }}!</h1>
+      <button (click)="signOut()">Sign Out</button>
+    </ng-template> -->
+  </amplify-authenticator>
+</div>
+
+<div class="router-outlet" *ngIf="authenticator.route === 'authenticated'">
+  <app-dashboard></app-dashboard>
+</div>

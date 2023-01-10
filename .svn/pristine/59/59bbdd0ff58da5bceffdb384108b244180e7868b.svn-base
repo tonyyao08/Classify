@@ -1,0 +1,62 @@
+<ng-container *ngIf="latestImage | async as image; else doneTraining">
+    <h3>LATEST UPLOAD ({{queueSize | async}} in queue)</h3>
+    <div class="viewbox">
+        <mat-card>
+            <img [src]="image.base64 | async | safeResource">
+        </mat-card>
+    </div>
+    <div>
+        <p>Please input the <strong>LABEL</strong> you would like to assign to the following image.
+            This label is what we will use to sort your item into its respective bucket.
+            For example, if the items you would like to sort are coins, and you would
+            like to sort by state - your label should be "Wisconsin" or "New York."
+            Please provide any additional information you think may be helpful in
+            distinguishing this item from others in the <strong>META INFO</strong> field.
+            This information must take the form of <strong>SPACE SEPARATED VALUES.</strong>
+        </p>
+
+        <mat-card class="form">
+            <mat-form-field class="example-form-field" appearance="outline">
+                <mat-label>Image Label</mat-label>
+                <input matInput type="text" id="label" name="label" [(ngModel)]="label">
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+                <mat-label>Meta Info</mat-label>
+                <textarea matInput id="meta" cdkAutosizeMinRows="1" cdkAutosizeMaxRows="5"
+                    [(ngModel)]="meta"></textarea>
+            </mat-form-field>
+            <button mat-raised-button color="primary" (click)="saveImageData(image.image)">Save Changes</button>
+            <button mat-icon-button mat-stroked-button>
+                <mat-icon (click)="deleteImage(image.image)">delete</mat-icon>
+            </button>
+        </mat-card>
+
+        <!-- <mat-card class="label">
+            <mat-form-field class="example-form-field" appearance="outline">
+                <mat-label>Image Label</mat-label>
+                <input matInput type="text" id="label" name="label" [(ngModel)]="label">
+            </mat-form-field>
+            <button mat-icon-button mat-stroked-button>
+                <mat-icon (click)="deleteImage(image.image)">delete</mat-icon>
+            </button>
+        </mat-card>
+
+        <div class="meta">
+            <mat-card>
+                <mat-form-field appearance="outline">
+                    <mat-label>Meta Info</mat-label>
+                    <textarea matInput id="meta" type="text" cdkAutosizeMinRows="1" cdkAutosizeMaxRows="5"
+                        [(ngModel)]="meta"></textarea>
+                </mat-form-field>
+            </mat-card>
+        </div>
+        <div style="padding-top: 20px">
+            <button mat-raised-button color="primary" (click)="saveImageData(image.image)">Save Changes</button>
+        </div> -->
+    </div>
+
+</ng-container>
+
+<ng-template #doneTraining>
+    <h3>Waiting for more training images...</h3>
+</ng-template>

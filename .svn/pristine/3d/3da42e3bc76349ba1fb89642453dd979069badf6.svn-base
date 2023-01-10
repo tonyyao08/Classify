@@ -1,0 +1,138 @@
+# THIS CODE WILL TAKE PICTURES USING THE CAMERA
+# CLICK ON THE FRAME AND PRESS THE "K" KEY TO TAKE A PICTURE
+# CLICK ON THE FRAME AND PRESS THE "ESC" KEY TO EXIT
+# PICTURES ARE SAVED AS IMAGE.JPG
+
+
+# we want to only take one picture, so set up a timer that start right before the picture
+# is taken and gets released after an interval so that the take picture process does not
+# get triggered for that time period
+
+
+# run this
+# sudo apt-get update && sudo apt-get install python3-gpiozero python-gpiozero
+import RPi.GPIO as GPIO
+from gpiozero import Button
+from picamera import PiCamera
+from time import sleep
+import cv2
+import time
+from picamera.array import PiRGBArray
+from datetime import datetime
+from upload_rpi_to_s3 import *
+
+
+def conveyor_belt_capture():
+    button = Button(2)
+    camera = PiCamera()
+    res = (1920, 1080)
+    camera.resolution = (1920, 1080)
+    camera.framerate = 60
+    rawCapture = PiRGBArray(camera, size=res)
+
+    time.sleep(.1)
+    # take picture using "k" key = 107
+    # cap = cv2.VideoCapture(0)  # camera input
+
+    local_img_folder = "/home/pi/Desktop/local_images/"
+    interval = 3
+
+    # S3 information:
+    parent_path = local_img_folder
+    bucket = "aal-rpi-bucket"
+    in_bucket_prefix = "test_images/"
+    saved_img_list = []
+    start_time = time.time()
+    taken = 1
+
+    for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
+
+        original_image = frame.array
+        image = original_image
+        #ret,frame = cap.read()
+    #     print(image.shape)
+        h_i, w_i, _ = image.shape
+        # We have the image so we can perform some processing on it
+        y_buffer = 30
+        x_scale = 5.5
+        ymin = y_buffer
+        ymax = h_i - y_buffer
+        xmin = int(w_i/x_scale)
+        xmax = int(((x_scale - 1)*w_i)/x_scale)
+
+        w_x = xmax - xmin
+        h_y = ymax - ymin
+        xm1 = int(xmin + w_x/7)
+        xm2 = 50 + xm1
+
+        belt = frame.array[ymin:ymax, xmin:xmax]
+
+        gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+        # Bounding Box
+        cv2.rectangle(image, (xmin, ymin),
+                      (xmin + w_x, ymin + h_y), (255, 0, 0), 5)
+
+        _, thresh_img = cv2.threshold(gray_image, 127, 255, cv2.THRESH_BINARY)
+        contours, _ = cv2.findContours(
+            thresh_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        #run = 0
+        passed_mid = False
+        #image = thresh_img
+
+        for cnt in contours:
+            (x, y, w, h) = cv2.boundingRect(cnt)
+            area = cv2.contourArea(cnt)
+
+            if ((area > 10000) and (xmin <= x) and (x+w <= xmax) and (ymin <= y) and (y+h <= ymax)):
+                # Put a rectangle around the object
+                cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 5)
+                cv2.putText(image, f"x = {x} xmid = {xmid}",
+                            (x, y-15), 1, 1, (0, 255, 0))
+                # this is when we know that we should take the picture
+
+                if (x >= xm1 and x <= xm2 and time.time() - start_time >= interval):
+                    cv2.putText(image, "Hold for 1 Second",
+                                (x, y-30), 1, 1, (0, 255, 0))
+                    now = datetime.now()
+                    image_name = now.strftime("%B_%d_%Y_%H:%M:%S")
+                    img_save_path = local_img_folder+image_name+".jpg"
+                    print(f"Current {taken} = {img_save_path}")
+                    passed_mid = True
+
+        cv2.imshow('section', image)
+        if passed_mid:
+            start_time = time.time()
+            camera.capture(img_save_path)
+
+            res_width, res_height = (1920, 1080)
+            r_y_scale = 7
+            r_x_scale = 3.5
+            buffer = 30
+            rymin = int(res_height/r_y_scale)
+            rymax = int(((r_y_scale-1)*res_height)/r_y_scale)
+            rxmin = int(res_width/r_x_scale) + buffer
+            rxmax = int(res_width - res_width/r_x_scale) + buffer
+
+            img = cv2.imread(img_save_path)
+            img = img[rymin:rymax, rxmin:rxmax]
+            cv2.imwrite(img_save_path, img)
+            # add the file to file_list
+            saved_img_list.append(img_save_path)
+            taken += 1
+
+        key = cv2.waitKey(30)
+        # if escape key is hit then exit
+        if key == 27:
+            # upload all files to s3:
+            upload_file_list_to_s3(parent_path, bucket,
+                                   in_bucket_prefix, saved_img_list)
+            break
+        rawCapture.truncate(0)
+
+
+def upload_file_list_to_s3(parent_path, bucket, in_bucket_prefix, file_list):
+    # here we can upload the image to s3 as well
+
+    for image_name in file_list:
+        upload_image(parent_path, image_name+".jpg", bucket, in_bucket_prefix)

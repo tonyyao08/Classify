@@ -1,0 +1,62 @@
+[Overview](README.md) > Raspberry Pi
+
+# Raspberry Pi/ Data Processing Unit
+
+Raspberry Pi configuration Steps:
+
+These are the steps needed to set up your Raspberry Pi 4 to interface with the camera, the Classify
+Web App and AWS.
+
+Step 1. Attach the camera to the Raspberry pi
+
+Step 2. On a separate computer, Download "Raspberry Pi Imager" to format a microSD card.
+
+Step 3. Install Debian "Buster" Raspberry Pi Operating System onto the microSD card
+(WARNING: Do NOT install "Bullseye" Raspberry Pi OS)
+
+Step 3. Install Debian "Buster" Raspberry Pi Operating System onto the micro SD card
+
+- The buster version is required to access the camera connection.
+
+Step 4. Camera Configuration
+
+- Plug Camera into Raspberry Pi board
+- Click the Raspberry logo in the top left corner
+- In "Preferences", hit "Raspberry Pi Configuration"
+- on the "Interfaces" tab, hit "Enable" on the "Camera" section.
+
+Step 6. Connect to Internet
+
+- Configure WIFI connection in top right corner of Raspberry Pi
+- Make sure the time zone matches the Eastern Time Zone, or else you will not be
+  able to upload images to S3 properly.
+
+Step 5. Environment Package installation commands (run the commands written within the quotes):
+
+- Open the terminal on the Raspberry Pi
+
+- A fresh install of numpy is required:
+  - run: "pip3 install -U numpy"
+- Install the rest of the required python packages
+
+  - run: "pip3 install -r requirements.txt"
+
+- Install debian environment packages:
+
+      - run: "sudo apt-get install -y libatlas-base-dev libhdf5-dev libhdf5-serial-dev
+
+  libatlas-base-dev libjasper-dev libqtgui4 libqt4-test awscli"
+
+In the Raspberry Pi terminal:
+
+- run: "aws configure" and enter the following fields:
+  - For AWS Access Key ID:
+    `YOUR IAM ACCESS KEY ID`
+  - For AWS Secret Access Key:
+    `YOUR IAM SECRET ACCESS KEY`
+  - For Default region name:
+    `YOUR CONFIGURED AMPLIFY REGION`
+  - For Default output format:
+    json
+
+Note: Refer to the [AWS installation guide](AWS.md) for more details.

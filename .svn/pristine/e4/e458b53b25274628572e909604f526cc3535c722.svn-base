@@ -1,0 +1,24 @@
+<div *ngIf="project; else loading">
+    <div class="project-info">
+        <h2>{{ project.projectName }}</h2>
+        <div class="project-actions">
+            <mat-slide-toggle [checked]="isTraining" (change)="toggleTraining($event)">Training Mode</mat-slide-toggle>
+            <button mat-icon-button mat-stroked-button>
+                <mat-icon (click)="deleteProject()">delete</mat-icon>
+            </button>
+        </div>
+    </div>
+    <mat-divider></mat-divider>
+    <mat-tab-group>
+        <mat-tab label="Training">
+            <app-training [project]="project"></app-training>
+        </mat-tab>
+        <mat-tab label="Monitoring">
+            <app-monitoring [project]="project"></app-monitoring>
+        </mat-tab>
+    </mat-tab-group>
+</div>
+
+<ng-template #loading>
+    Loading...
+</ng-template>

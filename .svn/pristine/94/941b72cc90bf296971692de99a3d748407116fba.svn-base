@@ -1,0 +1,170 @@
+# THIS CODE WILL TAKE PICTURES USING THE CAMERA
+# CLICK ON THE FRAME AND PRESS THE "K" KEY TO TAKE A PICTURE
+# CLICK ON THE FRAME AND PRESS THE "ESC" KEY TO EXIT
+# PICTURES ARE SAVED AS IMAGE.JPG
+
+# run this
+# sudo apt-get update && sudo apt-get install python3-gpiozero python-gpiozero
+import RPi.GPIO as GPIO
+from gpiozero import Button
+from picamera import PiCamera
+from time import sleep
+import cv2
+import time
+from picamera.array import PiRGBArray
+from datetime import datetime
+from upload_rpi_to_s3 import *
+import RPi.GPIO as GPIO
+import json
+import requests
+
+# set up GPIO
+led = 17
+GPIO.setmode(GPIO.BCM)
+GPIO.setwarnings(False)
+GPIO.setup(led,GPIO.OUT)
+
+button = Button(2)
+camera = PiCamera()
+res = (1920, 1080)
+camera.resolution = (1920, 1080)
+camera.framerate = 120
+rawCapture = PiRGBArray(camera, size=res)
+
+time.sleep(.1)
+# take picture using "k" key = 107
+cap = cv2.VideoCapture(0)  # camera input
+
+local_img_folder = "/home/pi/Desktop/local_images/"
+interval = 3
+start_time = time.time()
+taken = 1
+
+# S3 information:
+parent_path = local_img_folder
+bucket = "mycoins"
+in_bucket_prefix = ""
+
+for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
+
+    original_image = frame.array
+    image = original_image
+    #ret,frame = cap.read()
+#     print(image.shape)
+    h_i, w_i, _ = image.shape
+    
+    # resize window
+    rs = .85
+    window_width = int(w_i * rs)
+    window_height = int(h_i * rs)
+    
+    # We have the image so we can perform some processing on it
+    y_buffer = 10
+    x_scale = 5.5
+    ymin = y_buffer
+    ymax = h_i - y_buffer
+    xmin = int(w_i/x_scale)
+    xmax = int(((x_scale - 1)*w_i)/x_scale)
+
+    w_x = xmax - xmin
+    h_y = ymax - ymin
+    xm1 = int(xmin + w_x/7)
+    xm2 = xm1+90
+    belt = frame.array[ymin:ymax, xmin:xmax]
+
+    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    # Bounding Box
+    cv2.rectangle(image, (xmin, ymin),
+                  (xmin + w_x, ymin + h_y), (255, 0, 0), 5)
+
+    _, thresh_img = cv2.threshold(gray_image, 150, 255, cv2.THRESH_BINARY)
+    contours, _ = cv2.findContours(
+        thresh_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    #run = 0
+    passed_mid = False
+    #image = thresh_img
+    for cnt in contours:
+        (x, y, w, h) = cv2.boundingRect(cnt)
+        area = cv2.contourArea(cnt)
+
+        if ((area > 20000) and (xmin <= x) and (x+w <= xmax) and (ymin <= y) and (y+h <= ymax)):
+            # Put a rectangle around the object
+            cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 5)
+            cv2.putText(image, f"{area}  x = {x} xm1 = {xm1} xm2 = {xm2}",
+                        (x, y-15), 1, 1, (0, 255, 0))
+            # this is when we know that we should take the picture
+            if (x >= xm1 and x <= xm2):
+                cv2.putText(image, "Hold for 1 Second",
+                            (x, y-30), 1, 1, (0, 255, 0))
+                passed_mid = True
+
+    cv2.namedWindow('section', cv2.WINDOW_NORMAL)
+    cv2.resizeWindow('section', window_width, window_height)
+    cv2.imshow('section', image)
+    if passed_mid and time.time() - start_time >= interval:
+        GPIO.output(led,GPIO.HIGH)
+        now = datetime.now()
+        image_name = now.strftime("%B_%d_%Y_%H:%M:%S")
+        img_save_path = local_img_folder+image_name+".jpg"
+        print(f"Current {taken} = {img_save_path}")
+        
+        start_time = time.time()
+        camera.capture(img_save_path)
+
+# #         r = (3280,2464)
+        res_width, res_height = (1920, 1080)
+        r_y_scale = 7
+        r_x_scale = 3.5
+        xbuffer = 30
+        ybuffer = 30
+        rymin = int(res_height/r_y_scale) - ybuffer
+        rymax = int(((r_y_scale-1)*res_height)/r_y_scale) -ybuffer
+        rxmin = int(res_width/r_x_scale) 
+        rxmax = int(res_width - res_width/r_x_scale) + xbuffer
+
+        img = cv2.imread(img_save_path)
+        img = img[rymin:rymax, rxmin:rxmax]
+        cv2.imwrite(img_save_path, img)
+        # here we can upload the image to s3 as well
+        upload_image(parent_path, image_name+".jpg", bucket, in_bucket_prefix)
+        taken += 1
+        print("sent to s3")
+        ##### TONYS CODE FOR CREATING IMAGE QUERY
+        apiKey = "da2-tkzuvhzfe5etrmisvfchmr7sia"
+        projID = "5a9d5546-a6f5-4be1-851d-fa704435e674"
+        final_image = image_name + ".jpg"
+        create_image_query = f"""mutation {{ 
+          createImage(input: {{imageKey: "{final_image}", projectID: "{projID}"}}) {{ 
+            id 
+            _version
+            createdAt
+            updatedAt
+            _lastChangedAt
+            projectID
+            _deleted
+            imageKey
+          }}
+        }}"""#.format(final_image = final_image, projID = projID)
+
+        url = 'https://ztgryu55q5hs3o6tff5lh3qovq.appsync-api.us-east-1.amazonaws.com/graphql'
+
+        data = {"query": create_image_query}
+        json_data = json.dumps(data)
+        header = {'X-API-Key': apiKey}
+
+        response = requests.post(url=url, headers=header, data=json_data)
+
+        
+        
+        #### END TONYS CODE
+        GPIO.output(led,GPIO.LOW)
+
+
+    key = cv2.waitKey(30)
+    # if escape key is hit then exit
+    if key == 27:
+        print(create_image_query)
+        break
+
+    rawCapture.truncate(0)

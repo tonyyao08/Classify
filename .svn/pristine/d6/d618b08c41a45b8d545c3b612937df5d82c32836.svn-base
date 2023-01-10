@@ -1,0 +1,40 @@
+<p>TODO: Verify that labels have been configured. Verify we are no longer in training mode. Watch for changes to the
+    Project model with queued images to be sorted into a bucket.</p>
+
+    <h3>Mode:
+        <mat-button-toggle-group [(ngModel)]="currentMode" aria-label="Mode">
+            <mat-button-toggle value="train">Train</mat-button-toggle>
+            <mat-button-toggle value="classify">Classify</mat-button-toggle>
+        </mat-button-toggle-group>
+    </h3>
+
+    <div class="train" *ngIf="currentMode=='train'">
+        <h3>Number of images trained:&emsp;{{numberOfImagesTrained}}</h3>
+        <div class="list-images">
+            <mat-list *ngFor="let image of images">{{image}}
+                <mat-divider></mat-divider>
+            </mat-list>
+        </div>
+    </div>
+
+    <div class="classify" *ngIf="currentMode=='classify'">
+        <div class="example-action-buttons">
+            <button mat-button (click)="accordion.openAll()">Expand All</button>
+            <button mat-button (click)="accordion.closeAll()">Collapse All</button>
+          </div>
+          <mat-accordion class="example-headers-align" multi>
+            <mat-expansion-panel *ngFor="let label of labels">
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                    {{label}}
+                </mat-panel-title>
+                <mat-panel-description>
+                  Images classified to be of type '{{label}}'
+                </mat-panel-description>
+              </mat-expansion-panel-header>
+          
+              <p>** image title or display **</p>
+          
+            </mat-expansion-panel>
+          </mat-accordion>          
+    </div>

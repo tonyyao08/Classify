@@ -1,0 +1,29 @@
+<div *ngIf="project; else loading">
+    <div class="project-info">
+        <h2>{{ project.projectName }}</h2>
+        <div class="project-actions">
+            <button mat-icon-button mat-stroked-button>
+                <mat-icon (click)="deleteProject()">delete</mat-icon>
+            </button>
+        </div>
+    </div>
+    <mat-divider></mat-divider>
+    <mat-tab-group>
+        <!-- <mat-tab label="Label Configuration">
+            <app-label-configuration [project]="project"></app-label-configuration>
+        </mat-tab> -->
+        <mat-tab label="Training">
+            <app-training [project]="project"></app-training>
+        </mat-tab>
+        <mat-tab label="Monitoring">
+            <app-monitoring></app-monitoring>
+        </mat-tab>
+        <mat-tab label="Connection Settings">
+            <app-settings [project]="project"></app-settings>
+        </mat-tab>
+    </mat-tab-group>
+</div>
+
+<ng-template #loading>
+    Loading...
+</ng-template>

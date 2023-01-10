@@ -1,0 +1,25 @@
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { LabelConfigurationComponent } from './label-configuration.component';
+
+describe('LabelConfigurationComponent', () => {
+  let component: LabelConfigurationComponent;
+  let fixture: ComponentFixture<LabelConfigurationComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [ LabelConfigurationComponent ]
+    })
+    .compileComponents();
+  });
+
+  beforeEach(() => {
+    fixture = TestBed.createComponent(LabelConfigurationComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});

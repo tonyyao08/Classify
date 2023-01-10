@@ -1,0 +1,133 @@
+import numpy
+import logging
+from communicator import Communicator
+from fuzzywuzzy import fuzz
+from image import Image
+import boto3
+from threading import Thread
+from concurrent.futures import ThreadPoolExecutor
+
+
+class Classifier:
+
+    ###########################################################################
+    # initalize a client with aws rekognition for text detection
+
+    def __init__(self, communicator: Communicator):
+        self.communicator = communicator
+        self.rekognition = boto3.client("rekognition")
+
+    ###########################################################################
+    # function for TRAIN MODE: upload the image to s3 and webapp
+
+    def addTrainingImage(self, image):
+        self.communicator.uploadToS3(image, blocking=False)
+        self.communicator.sendImageToDatabase(
+            image, label="", userGenerated=True)
+
+    ###########################################################################
+    # use multithreading to classify images
+
+    def addClassifyImage(self, image):
+        # executorThread = Thread(
+        #     target=self.classifyActions, args=[image], daemon=True)
+        # executorThread.start()
+        self.classifyActions(image)
+
+    ###########################################################################
+    # main function for CLASSIFY MODE: upload 4 copies of the taken image to s3, call detect text and look for a bucket to place the original image into
+
+    def classifyActions(self, image):
+        self.communicator.uploadToS3(image)
+        detectedText = self.detect_text(image)
+        labels = self.communicator.labels
+        logging.info(f"BEGIN LABEL MATCHING ({image.imageKey})")
+        label = self.get_matched_label(labels, detectedText)
+        logging.info(f"END LABEL MATCHING ({image.imageKey})")
+        logging.info(f"MATCHED LABEL ({image.imageKey}): {label}")
+        if label is None:
+            label = ""
+        self.communicator.sendImageToDatabase(
+            image, label=label, userGenerated=False)
+
+    ###########################################################################
+    # uses aws rekongnition to call detect text on all images and merge them to single list for processing later
+
+    def detect_text(self, image: Image):
+        detectedText = []
+        logging.info(f"BEGIN REKOGNITION ({image.imageKey})")
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            result = executor.map(lambda version: self.runRekognition(
+                image, version[0]), image.versions)
+            detectedText = [item for sublist in result
+                            for item in sublist]
+        logging.info(f"END REKOGNITION ({image.imageKey})")
+        # for (versionName, b64) in image.base64encode():
+        #     response = self.rekognition.detect_text(Image={'S3Object': {
+        #         "Bucket": self.communicator.s3Bucket,
+        #         "Name": image.getFilename(versionName)
+        #     }})
+        #     textDetections = response["TextDetections"]
+        #     text_arr = []
+        #     for text in textDetections:
+        #         # only include text with over 75% confidence level
+        #         if (text["Confidence"]) > 75:
+        #             text_arr.append(text["DetectedText"])
+        #     detectedText = detectedText + text_arr
+        return detectedText
+
+    ###########################################################################
+    # function to detect text, only include text detected with > 75% accuracy
+
+    def runRekognition(self, image, versionName):
+        logging.info(f"BEGIN REKOGNITION ({image.imageKey}, {versionName})")
+        response = self.rekognition.detect_text(Image={'S3Object': {
+            "Bucket": self.communicator.s3Bucket,
+            "Name": image.getFilename(versionName)
+        }})
+        textDetections = response["TextDetections"]
+        logging.info(f"END REKOGNITION ({image.imageKey}, {versionName})")
+        logging.info(
+            f"REKOGNITION RESULTS ({image.imageKey}, {versionName}): {textDetections}")
+        text_arr = []
+        for text in textDetections:
+            # only include text with over 75% confidence level
+            if (text["Confidence"]) > 75:
+                text_arr.append(text["DetectedText"])
+        logging.info(
+            f"REKOGNITION CONFIDENT RESULTS ({image.imageKey}, {versionName}): {text_arr}")
+        return text_arr
+
+    ###########################################################################
+    # look through all label-keyword pairs in database
+    # if we find a keyword that perfectly matches detected text, return label
+    # otherwise, keep track of current highest accuracy and label
+    # return this current highest label in the end if its accuracy > 50%
+    # otherwise, return unknown
+
+    def get_matched_label(self, labels, detect_text_response):
+        current_best = "Unknown"
+        highest_accuracy = 0
+        for entry in labels:
+            user_keywords_arr = entry.get("rekognitionMeta")
+            for keyword in user_keywords_arr:
+                for detected_text in detect_text_response:
+                    keyword = keyword.upper()
+                    # matches whole string accuracy
+                    f1 = fuzz.ratio(keyword, detected_text)
+                    if f1 == 100:
+                        return entry.get("label")
+                    if highest_accuracy < f1:
+                        highest_accuracy = f1
+                        current_best = entry.get("label")
+                    # rearranges string into tokens, sorts and compares whole string
+                    f3 = fuzz.token_sort_ratio(keyword, detected_text)
+                    if f3 == 100:
+                        return(entry.get("label"))
+                    if highest_accuracy < f3:
+                        highest_accuracy = f3
+                        current_best = entry.get("label")
+        if highest_accuracy > 50:
+            return current_best
+        else:
+            return "Unknown"

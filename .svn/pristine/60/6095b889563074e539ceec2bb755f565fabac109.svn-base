@@ -1,0 +1,40 @@
+Sanjay Sharma, CMSC435 Sec. 0101
+
+What are the things we want to be able to accomplish with the RPI?
+-how are we going to run an interface on the RPI? How are we going to do it so that once we connect
+the power cord, it just displays the intended GUI? How are we going to format the file to do that?
+	-ideas on how to do this: https://medium.com/@avik.das/writing-gui-applications-on-the-raspberry-pi-without-a-desktop-environment-8f8f840d9867
+
+
+-how to take picture using camera
+-how to upload those images to AWS (what bucket are we using, is it provided by UMD, etc.)
+-will python even run on the RPI, how do we even get python running on the RPI in the first place
+-we need to create a WebApp using AWS Kinesis: https://aws.amazon.com/blogs/compute/building-a-raspberry-pi-telepresence-robot-using-serverless-part-1/
+
+
+-RPI to AWS to WebApp
+-WebApp talks to AWS about training and testing/classifying
+-just need a video stream going from RPI to AWS IOT/Kinesis (tutorial that Nick posted above)
+
+
+
+-RPI sends camera to AWS IOT and
+
+
+-make sure tony's code works for taking a photo, then send photos of coins to AWS team
+-if video streaming can be done wired, look into it
+
+-write code in python to tell RPI when to take the photo: use opencv
+-vivado3 SDK to interface with S3
+
+
+NEW OBJECTIVES:
+-detect image and take a picture of it (aal)
+-see how to upload images to S3 bucket (Sanjay)
+
+
+last week objectives: (for 4/17 onwards)
+-we need code to recognize if there is a coin and then take a picture (Sanjay)
+	-
+
+

@@ -1,0 +1,82 @@
+import { Injectable } from '@angular/core';
+import { DataStore } from '@aws-amplify/datastore';
+import { map, Observable, of, shareReplay } from 'rxjs';
+import { Image, Project } from 'src/models';
+import { StorageService } from './storage.service';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class DatabaseService {
+
+  projectList: Observable<Project[]>;
+
+  constructor(private storageService: StorageService) {
+    this.projectList = new Observable(function subscribe(subscriber) {
+      const subscription = DataStore.observeQuery(Project).subscribe(snapshot => {
+        const { items } = snapshot;
+        subscriber.next(items);
+      });
+
+      return function unsubscribe() {
+        subscription.unsubscribe();
+      };
+    });
+    this.projectList = this.projectList.pipe(shareReplay(1));
+  }
+
+  listProjects(): Observable<Project[]> {
+    return this.projectList;
+  }
+
+  getProjectByID(id: string): Promise<Project | undefined> {
+    return DataStore.query(Project, id);
+  }
+
+  observeLatestImages(project: Project) {
+    if (!project) {
+      return of([]);
+    }
+    const latestImages: Observable<Image[]> = new Observable(function subscribe(subscriber) {
+      const subscription = DataStore.observeQuery(Image, i => i.projectID('eq', project.id)).subscribe(snapshot => {
+        const { items } = snapshot;
+        subscriber.next(items);
+      })
+
+      return function unsubscribe() {
+        subscription.unsubscribe();
+      }
+    });
+    return latestImages.pipe(
+      map(images => images.sort((a, b) => {
+        const dateA = new Date(a.createdAt!);
+        const dateB = new Date(b.createdAt!);
+        return dateA.getTime() - dateB.getTime();
+      })),
+      map(images => {
+        return images.map(image => {
+          return {
+            base64: this.storageService.getImageData(project.imageBucket!, image.imageKey!),
+            image
+          };
+        })
+      })
+    );
+  }
+
+  async createProject(project: Project): Promise<Project> {
+    return DataStore.save(
+      project
+    );
+  }
+
+  async deleteProject(project: Project) {
+    DataStore.delete(project);
+  }
+
+  async updateProject(project: Project, updates: Partial<Project>) {
+    await DataStore.save(Project.copyOf(project, item => {
+      Object.assign(item, updates);
+    }));
+  }
+}

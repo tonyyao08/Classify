@@ -1,0 +1,14 @@
+from fuzzywuzzy import fuzz
+str1 = "West Virginia"
+str2 = "Virginia"
+
+# matches whole string accuracy
+f1 = fuzz.ratio(str1, str2)
+print(str1 + " " + str2)
+print(f1)
+print()
+# rearranges string into tokens, then sorts and compares whole string
+f3 = fuzz.token_sort_ratio(str1, str2)
+print(str1 + " " + str2)
+print(f3)
+print()

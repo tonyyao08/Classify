@@ -1,0 +1,12 @@
+opencv-python
+numpy
+datetime
+RPi.GPIO 
+PySimpleGUI
+typing
+typing_extensions
+websocket-client
+requests
+boto3
+picamera
+rel

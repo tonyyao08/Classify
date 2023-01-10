@@ -1,0 +1,123 @@
+# user can create a new project or load in existing project
+import boto3
+import json
+from PIL import Image
+
+bucket_name = "classify-bucket" # hard-coded
+project_name = "sample-project" # retrieve from request
+s3 = boto3.client('s3')
+rekognition = boto3.client("rekognition")
+empty_json = []
+
+# function to classify images by text 
+# written in top-down design approach
+def handler():
+    # initalize databases to store user created labels and matched buckets
+    label_database = project_name + "-label.json"
+    bucket_database = project_name + "-bucket.json"
+    initalize_databases(label_database, bucket_database)
+
+    # upload original image taken to s3 bucket
+    image_file = "newyork-quarter.jpg"
+    upload_to_s3(image_file)
+    # upload original image rotated 180 degrees to s3 bucket
+    flipped_image_file = flip_image(image_file)
+    upload_to_s3(flipped_image_file)
+
+    # detect text for both images, merge them into all detected text
+    original_detected_text = detect_text(image_file, bucket_name)
+    flipped_detected_text = detect_text(flipped_image_file, bucket_name)
+    all_detected_text = original_detected_text.append(flipped_detected_text)
+    
+    # check if detected text matches an existing label
+    matched = map_image_to_label(all_detected_text, image_file, label_database, bucket_database)
+
+    if matched:
+        # for a match, we return the image was classified to AWS Amplify
+        print("send that image was classified to Amplify")
+    else: # otherwise, the user manually adds text to help recognize this image
+        user_entered_label = "New York"
+        user_entered_text = ["new", "york"]
+        add_label(label_database, user_entered_label, user_entered_text)
+        print("added text to identify this image to label database")
+
+
+# Utility functions for performming operations below
+
+def initalize_databases(label_database, bucket_database):
+    with open(label_database, 'w') as f:
+        json.dump(empty_json, f, indent=4)
+
+    with open(bucket_database, 'w') as f:
+        json.dump(empty_json, f, indent=4)
+
+
+def upload_to_s3(image_file):
+    try:
+        response = s3.upload_file(image_file, bucket_name, image_file)
+        print(response + " uploaded flipped")
+    except Exception as e:
+        print(e)
+
+
+def flip_image(file_name):
+    # open the original image
+    original_img = Image.open(file_name)
+    # rotate original image 180 degrees
+    vertical_img = original_img.rotate(180)
+    # create a new file name for the flipped image and save it
+    flipped_image_name = file_name.split('.')[0] + "_flipped.jpg"
+    vertical_img.save(flipped_image_name)
+    
+    # close all our files object
+    original_img.close()
+    vertical_img.close()
+    return flipped_image_name
+
+
+def detect_text(photo, s3_bucket):
+    response = rekognition.detect_text(Image = {"S3Object": {"Bucket": s3_bucket, "Name": photo}})
+    textDetections = response["TextDetections"]
+    text_arr = []
+    for text in textDetections:
+        # only include text with over 75% confidence level
+        if (text["Confidence"]) > 75:
+            text_arr.append(text["DetectedText"])
+    
+    return text_arr
+
+
+def map_image_to_label(detect_text_response, image_file, label_database, bucket_database):
+    matched = False
+    with open(label_database) as lf:
+        labels_list = json.load(lf)
+
+    with open(bucket_database) as pf:
+        prev_database = json.load(pf)
+
+    name = "Unknown"
+    labels = [d['label'] for d in labels_list]
+    for entry in labels:
+        text_arr = entry.get("matchingText")
+        for text in text_arr:
+            if text.upper() in detect_text_response:
+                name = entry.get("name")
+                matched = True
+
+    new_bucket = {image_file:name}
+    prev_database.append(new_bucket)
+    
+    with open(bucket_database, 'w', encoding='utf-8') as f:
+        json.dump(prev_database, f, indent=4)
+
+    return matched
+
+
+def add_label(label_database, label_name, matching_text):
+    with open(label_database) as pf:
+        prev_database = json.load(pf)
+
+    new_label = {"label": {"name": label_name, "matchingText": matching_text}}
+    prev_database.append(new_label)
+    with open(label_database, 'w') as f:
+        json.dump(prev_database, f, indent=4)

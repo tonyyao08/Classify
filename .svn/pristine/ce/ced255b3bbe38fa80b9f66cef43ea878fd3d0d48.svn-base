@@ -1,0 +1,72 @@
+TEAM CLASSIFY:		__ / 100
+Team members present:	
+Date/Time of CDR:     	2022-04-22 3:30PM
+
+This rubric is based on the assumption that we came to strong agreement on the shape
+and objectives of the project by means of the product definition exercise (aka the
+"green light") or perhaps by that spec as amended by comments in the grading at that
+time. It was the necessary starting point for us to practice building according to 
+plans in a process-centered development environment. If planning was effective, then 
+our implementation should have been straight forward. In any case, in this rubric we
+assess how well the sprint proceeded. Later, the final delivery's grade will be based 
+in part on my assessment of how well the project captures the spirit of the original 
+assignment, which is to say, how well we actually solved the problem.
+
+
+CONSISTENCY     __ /15		"Does it do what we said?"
+scale:		System can't be demonstrated, is unrelated to the spec or project has no spec.
+		System demonstrated exhibits substantial discrepancies from spec or can't tell.
+		System demonstrated exhibits minor (understandable) discrepancies.
+		System demonstrated seems consistent with the spec.
+
+
+FUNCTIONALITY
+  Score:	__ /40		"Does it do what we meant? (Does it solve the problem?)"
+  Scale:	0. I see nothing work
+		1. I see a few components work separately, though with serious defects or system
+		   failures, and with others missing.
+		2. I see likely components work in pieces even if not together, though with
+		   serious defects or system failures.
+		3. I see a rough system function partially, though with defects or system failures.
+		4. I see a system doing something even if we can't tell how related to problem.
+		5. I see a system appear to address articulable parts of the spec, even if with
+		   rough edges.
+		6. I see a system address major parts of the problem (per spec), even if not all
+		   of it.
+		7. I see a system demonstrate problem solutions per spec, though with brittle
+		   edge cases.
+		8. I see a system smoothly demonstrate credible activity related to the problem
+		   though not fully populated with data at scale.
+	       *9. I see a usable system credibly solve problems per spec using realistic data
+		   though not fully at scale or in target environment.
+		10. I see a usable product that is ready for acceptance testing.
+
+
+IMPLEMENTATION  __ /35		"Does it reflect professional practices?"
+properties:	Configurations are actively managed and capture essential dependencies w/o bloat.
+		Components support traceability to tests and spec.
+		Reasonable code standards were employed and followed.
+		Record evidences sustained development; the team was fully engaged and employed
+			sound practices that improved quality based on experiences with system use.
+		Implementation decisions make effective use of resources and are efficient
+			as appropriate to project.
+		Implementation meets reasonable standards for security, privacy, accessibility,
+			usability and intellectual integrity (above and beyond requirements made
+			explicitly in the spec.)
+		Code exhibits strong cohesion with low coupling between design units; dependencies
+			are actively managed; code base can be maintained.
+
+PRESENTATION    __ /10
+scale: 		The team offered no presentation.
+		In the team presentation I heard/saw ...
+		... an ad hoc pitch that lacked organization and credibility.
+		... a basic message though with need of polish (to timing,
+			consistency, expression or similar)
+		... a businesslike pitch/demo offered with professionalism and polish
+
+Advertising site checked:	 *
+Cover sheet signed/submitted:	 *
+
+
+Comments from discussion, considerations to attend to before/during ATs:
+

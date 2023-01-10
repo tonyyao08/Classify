@@ -1,0 +1,304 @@
+2022-03-21 Comments on V3 as in repo this date.
+
+(Thanks for the thumbnail sketch describing changes, this helps a lot in triaging the document.)
+
+1. Generally I would still like to have seen this maintained in the repo at the assigned name -
+"proposal.docx"  Baking semantics and version info into a title kind of subverts the purpose of
+a configuration management system; someone looking for the doc should only go to one place, and
+if we want a different version then that is what the tool is for (revert.) As is, someone must
+look for (even if briefly) and the decide which file to select. We should use the power of these
+tools. 
+
+2. The intention to use this system for other purposes (to make it "general purpose") is stated
+but really there is little planning offered toward ensuring it will be the case. The ATs would
+be an opportunity for this, but chiefly this section states only that we know the customer will
+likely use this for something like cartridge cases. (Not "bullet cases.") Potentially the team
+might have offered a plan to run their own drill with some other items than coins in order to
+get the kinks worked out, and in anticipation of participating in the client shakeout tests at
+end. This would have helped test drive the documentation too, which is alluded to but not fully
+described. Likely the ATs would be structured such that the user (not a team member) would just
+follow the directions as delivered, complete the training activities and then run the classify
+tools for 'real' on a live set. There is some language about some aspects of this in 4.4 though
+not terribly crisp.
+
+3. Related to #2, potentially some of the language relating to testing would still need to be
+updated in this document, as it still makes reference to it being fully virtual. Likely this is
+an artifact of the big changes in the last week.
+
+4. I do see documentation promised in the manifest, though without much in specifics of what
+it might say. 
+
+5. The example UI still looks pretty tied with coin sorter (page 10.) Potentially we would use
+these sorts of renderings (and more) to walk through the work flow and make sure each of the
+steps makes sense in the context of the architecture we are offering. And this of course is a
+key reason to create the renderings - "run" the program for cheap and discover gaps before it
+is expensive to discover them in code. (E.g. So, what does it look like for me to call up a
+previously trained model for use in the day's sorting exercise?)
+
+6. I'm not sure AWS Amplify gives that much more power over tools you could simply configure
+for yourselves more or less manually, but it is your call (and at least you are not trying to
+bake in G**gle services...) I suppose this can make sense insofar as use of an instance to 
+stand up an iOS container for using CoreML. Have care not to let this grow into too much of a
+Rube Goldberg configuration, as we risk spending more time tending eccentric framework details
+than perhaps in building out our core functionality. One can spend a lot of effort trying to
+use something intended to be "simple."
+
+7. Seems like a simple diagram (state chart?) would have helped explain the abstract operation 
+of user controls independent of how they might be rendered. This might still help in connecting
+the Pi with the ML component. 
+
+8. In terms of effort, it is nice that we think it will all equitably break down to a 43 hour
+investment for each team member, but that almost never happens, and more to the point, we'd 
+make that projection based on the demands of the components. As expressed, it still comes across
+as "here is how much time we choose to give" in some sense. 
+
+9. What might be more useful to the team than the timeline as given is a Gantt chart showing
+the separability vs dependencies among these tech tasks such that we can know how to divide them
+up among team members. The order matters, and overall this is what will dictate the actual time.
+Example: Agreeing on the API early (maybe based on a state machine diagram, see above point)
+can let a Pi team build out the controller scaffolding while an iOS team builds out framework
+of the container for CoreML. This is divide and conquer. We'd like to get the big picture working 
+as soon as possible, then have stronger basis for a team to transition to vetting UX based
+on presentation options, while another team tunes, massages and tests the actual prediction
+mechanism. The point being, the sooner we achieve ostensible soup-to-nuts functionality, the
+sooner we will have the "oh sh*t" moments of discovering work flow which is needed but not yet
+contemplated. (And it looks to me like there will be several.) Let's not discover those during 
+ATs. And back to the top point: finer grain tasking with Gantt chart lets us find a good initial 
+plan for order of these tasks.
+
+10. The updated dollar cost doesn't seem well supported with specifics, but it is order of
+magnitude believable. 
+
+11. Probably there is a revised risk analysis to be done with the new architecture. Are we
+moving images from a local camera through a Pi to remove engine for processing? There is
+nothing "real time" about this. Possibly impact to over throughput objectives?
+
+12. I miss where we make the call of what kind of performance we can wring from this system,
+the "grand aggregate" computation of success criteria. 
+
+
+So let's green light this draft and see where it gets us. Ordinarily (and with less of a time
+crunch at the end of drafting) I would have sent this back for another iteration or two of
+polish as inspired by the above notes. Probably the key quality improvement step would be to
+walk through the use of our system as a user doing one or another task, using lo-fi renderings 
+for discussion and then reach agreement on what each task looks like in our system. Can we see
+how it would be done or not? Same for realizable exception conditions - what does the system
+do? Just blue screen? (Let's hope not, and in particular, let's not design it that way.) So I
+will snip a few more points for these gaps, but also will go easy on it since I think we have
+lots more risk going forward, not from gaps in the ML stuff, which I think you guys will get
+right, but from the unglamorous usage considerations which will surround that code (which is
+to say, in the gap between program and product.) 
+
+I still think this is going to be a bang up project and appreciate you working with me on
+those architecture questions. Let's go build it!
+
+
+
+2022-03-18 Additional comments on V2
+
+I offered some banner comments last night so you would have rapid turn around on the draft.
+The present notes are sent to augment those comments.
+
+1. I'll underscore again one of the fundamental conundrums we both face: I am your customer,
+I want to use this system, but an $800 phone (which by the way is not accounted for in the
+cost proposal) is not in the cards for me, or at least, I have not been shown why this will
+be essential to succeed when a $35 Raspberry Pi with $10 camera would not. I get it that you 
+prefer the iOS platform for the software, and preliminary tests point to this being a better
+tech path in software. This may or may not need an Apple camera bundled in that environment. 
+If the key factor is having the camera bundled with the platform (though I think this is not
+what the team asserts) then explain why we are limiting this to Apple and not offering an 
+Android option; as a design matter, we would like not to limit options for later deployment. 
+(Short form of this comment: I need to see why this juice is worth the squeeze.)
+
+2. I think that getting 95% accuracy on a validation set is a lot different than deploying a
+system in even a quasi-real world, which the present simulation does not approach. I would not
+expect a model to match validation performance in the wild, and if my expectation is sensible
+then a project which lives entirely in software and simulation will never have to grapple with
+real considerations of control, exception handling and of course data issues of deploying ML.
+
+3. After reflecting on the thoughts from last night, I feel no less concerned about potential 
+for achieving accuracy or throughput on sorting based on nuanced distinctions done at scale.
+
+4. Some nits to pick: 
+(a) In 2.1.1. we flag "ease of use" but upon reflection I don't recall where in this document 
+    we say what that means or how we will measure that we achieved it.
+(b) Is the model trained on your device? Are they then saved on the device? Can they be shared
+    between devices and platforms? Are you using active learning models? These seem relevant
+    to a software spec since at moment I see no real functionality for managing activities that
+    are related to those questions.
+(c) Picture in section 3/pg 22, is pretty confusing. I think I know what it might be trying to
+    assert? Our hope for such things though is that a reader would know what you want to assert.
+    A better picture for architecture likely will help us moving forward (in particular in my
+    concluding thoughts from this review as below.)
+(d) Also mentioned last night, but to elaborate: all the UI suggested so far is tailored to tell
+    whether we are scanning one or another coin by denomination. Apparently we are not even going
+    to try to discriminate enough between kinds of a given coin, is that right? (The Maryland vs
+    Virginia quarter, for example.) If the impressionistic examples in our spec aren't right then
+    we are not going to get the final code right. If penny vs nickel etc is all I want to do then
+    I would just hire a high school student who knows how to hack Lego Mindstorm
+	https://www.youtube.com/watch?v=s-GVdQp-RuI
+(e) The acceptance tests need to call out the standard by which we rate success; it should be
+    something we can pass or fail based on measurement. What is that?
+(f) In 2.2 we talk about guiding a user to set things up correctly, but we have no idea what that
+    can mean in this fully simulated environment. (See earlier point about "in the wild.")
+
+Overall: Here is where I am right now. I remain surprised about the inherent need for iOS and
+phone (as noted). I can accept that this might be a product I cannot use, but I can't go along 
+with this as an exercise based on entirely synthetic environment. If this is your preferred
+solution path, then go with the bundled phone/iOS environment, but I will hold out for seeing 
+it drive a 'real' reference architecture as described below. 
+
+Let's posit that our target environment is a conveyor belt and sorting system driven by a Pi. 
+(Yes, I can splurge for a Pi.) This won't be 'real' in the sense of actually driving motors or
+the like, but we can configure a Pi to act like this independent of the synthetic environment
+and use it in our ATs, so in this sense it will act as a sufficient decoupling tool. It is up
+to the team as to how it interoperates with your target platform (net? USB ports?) but the
+device would have its own minimal controls for input (presumably there is a basic need for a
+user to manage and/or simulate the belt/camera/sorting behavior) and would likewise have its
+own display for the sorting. (If your platform can push a code to the Pi saying what kind of
+quarter it just found, and this can be displayed on an LCD screen, then we can believe that 
+the same Pi could have driven motors to push the coin to an appropriate bin.) Same for control
+of the belt. Your platform can push the code to request "next item" which the Pi would display
+as prompt for a user to place next item under the camera, then the user click/key/button will
+indicate ready. Your camera will snap the image and move on. Make sense? We'd need to see the
+specific architecture for this early to reach agreement but I think this Pi system is not the
+hard part of our project.
+
+An important aspect of the above is that it assists in measurement. Presumably we can time
+the item-to-item throughput (but factor out manual user involvement in placing items on the
+belt/camera). Similarly, the display lets us count uses apart from our prediction system. 
+When new data sets are introduced, we can manually keep track of the classification versus
+actual results.
+
+So to the measurement. This needs to be a product, not just a clever program in synthetic
+environment, so what do we think is the performance, throughput and so on necessary for any
+reasonable user to declare success? Call your shot. It seems to me (though I invite the team
+to express this in more clarity and detail) that one part of the equation is to demo the tool
+in our reference 'real' architecture with high accuracy and coin sorting, by which I mean 
+also the differentiation between quarter designs. (That was in the tasking statement.) And I
+think also this then needs to be demonstrated with a 'new' use - like the casings sort task - 
+in which the train activity might happen. It should not take excessive time (we need to agree
+what that means) and it should be at high accuracy in order for us to declare victory. We 
+all should agree that moving between applications should not involve reprogramming, tweaking,
+tuning or excessive refactoring. We should follow directions and have it work. Or ... you tell
+me what might be the better tests.
+
+Overall I think this is a credible document and I commend the team on piloting of the data
+work so far. Good! I am just holding out for a project which can more plausibly be cast as
+being turned into a deployable tool, not exclusively a toy with no serious upgrade path.
+
+
+
+
+2022-03-17 Comments on 'V2-project proposal.docx'
+
+See again #2 of comments dated 14th. Baking version information into a title makes it
+harder for a configuration management tool to be useful for you.
+
+I will be terse in the balance of remarks since I know time is tight and we must
+cut to the chase.  My banner comments are:
+
+1. I remain concerned about creating a pilot with an iPhone. This is a closed-end system
+and I know nobody who would be inclined to buy an iPhone for this application. (At least,
+it does not offer a tool I will be able to use.) I see the analysis in section 3, but don't
+yet know how to weigh the differences between these tools. Did we not get good initial
+results from those others because of some issue inherent to the tools or did we just not
+get deep enough into them to make effective use? Without a good sense of that, this will
+read a lot like there are simple preferences for a particular dev environment. Anyway - it
+causes concern.
+
+2. "We will provide an API that any controller can interface with." Really? What does it
+look like? I don't see it here. How are those hypothetical signals making it out to some
+real device?
+
+3. After the abstract description of target environment (section 2) I don't see a lot of
+how actual classification info will be shown to us. We already know there won't be a real
+(physical) conveyor or bin. It is displayed?
+
+4. All the wireframe images (and I appreciate seeing more of these in the present draft)
+are specific to the coin sorter, so it isn't clear to me how this would look in (or work
+for) the validation exercises when we look for classifying fasteners, cartridge (not bullet)
+cases, stamps or similar. 
+
+5. I don't see promises or target performance metrics called out. What throughput can we
+look for? If we classify at 90%+ accuracy but only do so at 1 Hz is that a win? If we can
+sustain 60 Hz throughput but only 50% accuracy is that a win? Call your shot. Do we think
+we will be able to recognize (or distinguish) quarters based on state-specific design? Or
+years? Again: call your shots.
+
+6. I see little analysis of possible admin operations to using this, however unglamorous
+these things might be. Do our users not have need to recover from exceptions, partial 
+captures? Or manage the data sets? Think back to class discussion about difference between
+programs and products.
+
+
+
+
+
+2022-03-14 Comments on draft dated March 13 as in repo this date.
+
+1. This is a credible first step and reflects quite a bit of good preparatory research.
+
+2. We might reasonably store the spec as a Word document per terms of the assignment. This
+keeps it accessible in our scripts and makes it easy to refer back to the different versions
+which might evolve (and thus need to be referenced in the future, like on the final exam.) I
+don't know that we win clarity by trying to refer unambiguously to one or another prior email
+attachments or similar. Putting the semantic/version info into title of document in many
+ways defeats the purpose of a revision control system.
+
+3. Potentially we would use a version number for the document, though date can suffice if we
+maintain it on cover.
+
+4. Press release is light and fluffy; not sure there is much value to trying to plump it up
+now, though. The greater specificity would give clearer vision to what this is about, and 
+we then get to trace back through the design to ensure each of the main points of functionality
+are reflected in the design. (You know - application of our principles.)
+
+5. I miss why this must be an iOS application. Why do I need to buy an iPhone? Do you even
+tell me what iPhone I must buy? What are the alternative approaches which would work with a
+less expensive (or more available) tech base?
+
+6. "We will provide documentation for an API that any microcontroller will interface with."
+Seems like a broad goal. What is the AT that confirms this is so? I don't see this leveraged
+in the ATs.
+
+7. I see lots of fairly airy assertions "If the program determines an object to be Type X,
+a signal should be sent to the sorter that would allow it to sort it into bin X." This is a
+statement of what should happen; what is the statement of what will happen?
+
+8. I do see options on some part of the DB framework (3.3) though not comparisons on the
+other tech components. I see no reference architecture even though a simple electro-mech
+system like ours sort of begs for a diagram of some kind. (We do see a single screen mock
+up 3.2a, though why someone will interact with this system with an iPhone remains mystery.)
+Could we not at least make a mock up of what the likely system will look like when all put
+together?
+
+9. I see no basis for how we came up with the cost estimate. We asked for an objective
+estimation method (something predictive based on features of the design) and not for
+a socialized method (telling us values you are simply willing to give, independent of
+whether this gets to the outcome.) For that matter the choice of design is opaque right
+now so I guess there isn't a strong basis to cost this out yet.
+
+10. In ATs I see no actual procedure called out. We'd like the plan. We'd also like to
+see a more crisp statement of what would constitute the test success. Is it only 80% in
+some vague set of circumstances? Why only coins? Aren't we going to test the requirement
+for a new user to bring some new application to us and see how quickly we can win good
+results? How quick is "quick" in that case? Do we have a way to quantify what is the 
+intended scope of application or is it going to work for any and all items which I can
+photograph? Can we see a concrete example of what a new user would bring to the game in
+order to try this out? How will they install this or configure it in their new environs?
+Can we tell the API they must hit in their industry application? What constitute "right"
+answers and how will we measure?
+
+11. Seems like one could create more elaborate wireframes to work though what users will
+see in the training mode vs application mode? What is the start/stop, edit, view, save, etc
+stuff going to look like? Do we know all the verbs that will need to be in that lexicon for
+the UI to serve?
+
+12. Back to ATs, is there any sense of user sentiment to factor into our success criteria?
+Once we figure out an objective test for "correctness" whatever that means, will we also
+harvest sentiment of the users? Is it a success if the new users agree the answers are right
+but are so unhappy with the UI they would never touch it again? Is it a success if the users
+like it all but we get wrong answers? Umm, who are these users performing our ATs? How will
+we recognize the right people to recruit?
+

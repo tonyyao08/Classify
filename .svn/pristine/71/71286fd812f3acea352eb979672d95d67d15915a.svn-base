@@ -1,0 +1,13 @@
+<div class="heading">
+    <h2>My Projects</h2>
+    <button mat-icon-button mat-stroked-button>
+        <mat-icon (click)="createProject()" matTooltip="Create new project">add</mat-icon>
+    </button>
+</div>
+
+<mat-nav-list>
+    <ng-container *ngFor="let project of projects | async">
+        <a mat-list-item [routerLink]="['/p', project.id]">{{project.projectName}}</a>
+        <mat-divider></mat-divider>
+    </ng-container>
+</mat-nav-list>

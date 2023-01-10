@@ -1,0 +1,13 @@
+import cv2
+
+img = cv2.imread('img.jpg')
+while True:
+    cv2.imshow('test', img)
+    Key = cv2.waitKey(30)
+    if Key == 27: #escape
+        break
+    elif Key == -1:
+        continue
+    else:
+        print(Key)
+

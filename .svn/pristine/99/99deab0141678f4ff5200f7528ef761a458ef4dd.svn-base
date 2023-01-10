@@ -1,0 +1,206 @@
+# THIS CODE WILL TAKE PICTURES USING THE CAMERA
+# CLICK ON THE FRAME AND PRESS THE "K" KEY TO TAKE A PICTURE
+# CLICK ON THE FRAME AND PRESS THE "ESC" KEY TO EXIT
+# PICTURES ARE SAVED AS IMAGE.JPG
+
+# run this
+# sudo apt-get update && sudo apt-get install python3-gpiozero python-gpiozero
+import RPi.GPIO as GPIO
+from picamera import PiCamera
+from time import sleep
+import cv2
+import time
+from picamera.array import PiRGBArray
+from datetime import datetime
+from upload_rpi_to_s3 import *
+import RPi.GPIO as GPIO
+import json
+import requests
+
+
+def conveyor_belt(bucket, in_bucket_prefix, num_objects, path_for_local_imgs):
+    # Set up LED
+    led = 17
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setwarnings(False)
+    GPIO.setup(led, GPIO.OUT)
+
+    # Setup camera
+    camera = PiCamera()
+    res = (1920, 1080)
+    camera.resolution = (1920, 1080)
+    camera.framerate = 120
+    rawCapture = PiRGBArray(camera, size=res)
+    time.sleep(.1)
+    # cap = cv2.VideoCapture(0)  # camera input
+    local_img_folder = path_for_local_imgs
+    interval = 3
+    start_time = time.time()
+    taken = 0
+
+    # S3 information:
+    parent_path = local_img_folder
+    # in_bucket_prefix = ""
+
+    for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
+
+        original_image = frame.array
+        image = original_image
+        h_i, w_i, _ = image.shape
+
+        # resize window
+        rs = .85
+        window_width = int(w_i * rs)
+        window_height = int(h_i * rs)
+
+        # We have the image so we can perform some processing on it
+        y_buffer = 10
+        x_scale = 5.5
+        ymin = y_buffer
+        ymax = h_i - y_buffer
+        xmin = int(w_i/x_scale)
+        xmax = int(((x_scale - 1)*w_i)/x_scale)
+
+        # Define Camera Pass Trigger
+        w_x = xmax - xmin
+        h_y = ymax - ymin
+        xm1 = int(xmin + w_x/7)
+        xm2 = xm1+130
+
+        # Bounding Box
+        gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        cv2.rectangle(image, (xmin, ymin),
+                      (xmin + w_x, ymin + h_y), (255, 0, 0), 5)
+        _, thresh_img = cv2.threshold(gray_image, 90, 255, cv2.THRESH_BINARY)
+       # Get contours
+        contours, _ = cv2.findContours(
+            thresh_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        passed_mid = False
+
+        # For loop to display Video Feed
+        max_area = 0
+
+        for cnt in contours:
+            a = cv2.contourArea(cnt)
+            if a > max_area:
+                max_area = a
+                max_cnt = cnt
+        area = max_area
+#         for cnt in contours:
+        if max_area > 15000:
+            (x, y, w, h) = cv2.boundingRect(max_cnt)
+    #         area = cv2.contourArea(cnt)
+            
+            if  ((xmin <= x) and (x+w <= xmax) and (ymin <= y) and (y+h <= ymax)):
+                # Put a rectangle around the object
+                cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 5)
+                cv2.putText(image, f"{area}  x = {x} xm1 = {xm1} xm2 = {xm2}",
+                            (x, y-15), 1, 1, (0, 255, 0))
+                # this is when we know that we should take the picture
+                if (x >= xm1 and x <= xm2):
+                    cv2.putText(image, "Hold for 1 Second",
+                                (x, y-30), 1, 1, (0, 255, 0))
+                    passed_mid = True
+        #image = thresh_img
+        cv2.namedWindow('section', cv2.WINDOW_NORMAL)
+        cv2.resizeWindow('section', window_width, window_height)
+        cv2.imshow('section', image)
+
+        if passed_mid and time.time() - start_time >= interval:
+            # Turn the led on
+            GPIO.output(led, GPIO.HIGH)
+
+            # Get img save path and image name
+            img_save_path, image_name = get_new_filename(local_img_folder)
+
+            # Capture image
+            camera.capture(img_save_path)
+
+            # Resizing the captured image
+            crop_and_save(img_save_path)
+
+            # Here we sell
+            # upload_image(parent_path, image_name+".jpg",
+            # bucket, in_bucket_prefix)
+            taken += 1
+            print(f"Taken = {taken}")
+
+            # Create Image Query
+            apiKey = "da2-tkzuvhzfe5etrmisvfchmr7sia"
+            projID = "5a9d5546-a6f5-4be1-851d-fa704435e674"
+            create_image_query = gen_web_image_query(image_name, projID)
+
+            url = 'https://ztgryu55q5hs3o6tff5lh3qovq.appsync-api.us-east-1.amazonaws.com/graphql'
+
+            data = {"query": create_image_query}
+            json_data = json.dumps(data)
+            header = {'X-API-Key': apiKey}
+            # requests.post(url=url, headers=header, data=json_data)
+            # END TONYS CODE
+            start_time = time.time()
+            GPIO.output(led, GPIO.LOW)
+
+        key = cv2.waitKey(30)
+        # if escape key is hit then exit
+        if key == 27 or taken >= num_objects:
+            #print(create_image_query)
+            break
+
+        rawCapture.truncate(0)
+#################################################################
+
+
+def get_new_filename(local_img_folder):
+    now = datetime.now()
+    image_name = now.strftime("%B_%d_%Y_%H:%M:%S")
+    return local_img_folder+image_name+".jpg", image_name
+#################################################################
+
+
+def crop_and_save(img_save_path):
+    res_width, res_height = (1920, 1080)
+    r_y_scale, r_x_scale = (7, 3.5)
+
+    xbuffer = 30
+    yminbuffer = 25
+    ymaxbuffer = 35
+
+    # save resized image
+    rymin = int(res_height/r_y_scale) - yminbuffer
+    rymax = int(((r_y_scale-1)*res_height)/r_y_scale) - ymaxbuffer
+    rxmin = int(res_width/r_x_scale)
+    rxmax = int(res_width - res_width/r_x_scale) + xbuffer
+
+    img = cv2.imread(img_save_path)
+    img = img[rymin:rymax, rxmin:rxmax]
+    cv2.imwrite(img_save_path, img)
+#################################################################
+
+
+def gen_web_image_query(image_name, projID):
+    final_image = image_name + ".jpg"
+    create_image_query = f"""mutation {{
+            createImage(input: {{imageKey: "{final_image}", projectID: "{projID}"}}) {{
+                id
+                _version
+                createdAt
+                updatedAt
+                _lastChangedAt
+                projectID
+                _deleted
+                imageKey
+            }}
+            }}"""  # .format(final_image = final_image, projID = projID)
+    return create_image_query
+
+
+#################################################################
+
+# Driver
+bucket = "mycoins"
+in_bucket_prefix = ""
+path_for_local_imgs = "/home/pi/Desktop/local_images/"
+num_objects = 4
+
+conveyor_belt(bucket, in_bucket_prefix, num_objects, path_for_local_imgs)
+

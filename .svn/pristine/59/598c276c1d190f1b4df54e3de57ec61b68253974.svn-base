@@ -1,0 +1,19 @@
+import { Component, Input, OnInit } from '@angular/core';
+import { Project } from 'src/models';
+
+@Component({
+  selector: 'app-label-configuration',
+  templateUrl: './label-configuration.component.html',
+  styleUrls: ['./label-configuration.component.scss']
+})
+export class LabelConfigurationComponent implements OnInit {
+
+  @Input()
+  project!: Project;
+
+  constructor() { }
+
+  ngOnInit(): void {
+  }
+
+}

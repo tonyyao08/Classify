@@ -1,0 +1,9 @@
+read me
+    2.1. For AWS Access Key ID: 
+        AKIAYN2NMRAHXCF5XFXA 
+    2.2. For AWS Secret Access Key: 
+        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   
+    2.3. For Default region name:
+        us-east-1
+    2.4. For Default output format:
+        json

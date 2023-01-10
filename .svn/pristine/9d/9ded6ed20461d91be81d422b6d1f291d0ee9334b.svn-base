@@ -1,0 +1,69 @@
+<ng-container *ngIf="latestImage | async as image; else noImages">
+  <h3>LATEST UPLOAD</h3>
+  <div class="viewbox">
+    <mat-card class="preview">
+      <img [src]="image.base64 | async | safeResource">
+    </mat-card>
+    <mat-card class="label">
+      Classified Label: <strong>{{image.image.label}}</strong>
+    </mat-card>
+  </div>
+
+
+</ng-container>
+
+<ng-template #noImages>
+  <h3>No images yet</h3>
+</ng-template>
+
+<ng-container>
+  <div class="viewbox" style="width: 100%;" *ngIf="preview; else elseBlock">
+    <div class="images" style="width: 50%; margin-right: 50%; height: 100px; float: left;">
+      <mat-card class="system-info">
+        <h4><b>System Info</b></h4>
+        <p>Configured Labels:</p>
+        <ul>
+          <li *ngFor="let label of labels | async">{{ label }}</li>
+        </ul>
+
+        <p>History (latest first)</p>
+        <mat-selection-list #labels [multiple]="false" (selectionChange)="getImage($event)">
+          <mat-list-option *ngFor="let image of history | async" [value]="image.imageKey">
+            {{ image.summary }}
+          </mat-list-option>
+        </mat-selection-list>
+      </mat-card>
+    </div>
+
+    <div class="curr-image-display">
+      <ng-container *ngIf="currImage | async">
+        <mat-card class="preview">
+          <img [src]="currImage | async | safeResource">
+
+          
+          File Name: {{labels.selectedOptions.selected[0]?.value}}
+          
+        </mat-card>
+      </ng-container>
+    </div>
+  </div>
+
+  <ng-template #elseBlock>
+    <div class="images">
+      <mat-card class="system-info">
+        <h4><b>System Info</b></h4>
+        <p>Configured Labels:</p>
+        <ul>
+          <li *ngFor="let label of labels | async">{{ label }}</li>
+        </ul>
+
+        <p>History (latest first)</p>
+        <mat-selection-list #labels [multiple]="false" (selectionChange)="getImage($event)">
+          <mat-list-option *ngFor="let image of history | async" [value]="image.imageKey">
+            {{ image.summary }}
+          </mat-list-option>
+        </mat-selection-list>
+      </mat-card>
+    </div>
+  </ng-template>
+</ng-container>

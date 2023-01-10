@@ -1,0 +1,21 @@
+.meta {
+    display: flex;
+    flex-direction: column;
+}
+
+.viewbox img {
+    height: 100%;
+    display: block;
+}
+
+.viewbox {
+    
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    mat-card {
+        height: 300px;
+    }
+}

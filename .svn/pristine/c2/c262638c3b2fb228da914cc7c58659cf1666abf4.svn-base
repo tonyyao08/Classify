@@ -1,0 +1,33 @@
+import sys
+import runpy
+from rpi_region_capture import *
+from os.path import exists
+
+# This file is the command line interpreter. It is the file that will actually be executed from the user.
+# It is necessary to look at the README.txt to run the program properly.
+
+n = len(sys.argv)
+user_file_path = ""
+want_scaling = ""
+scaling_input = ""
+print()
+
+if n == 1:
+    user_file_path = input(
+        'Please enter in the filename (including path) that contains the curve defining points: ')
+    mode = input('Would you like to train or classify? (T/C): ')
+    if mode == 'T' or mode == 't' or mode == 'Train' or mode == 'train' or or mode == 'TRAIN':
+        # ******call function with ratio******
+        runpy.run_path(path_name='upload_rpi_to_s3.py')
+        # ******call function with ratio******
+    else:
+        # ******call function without ratio******
+        runpy.run_path(path_name='upload_rpi_to_s3.py')
+        # ******call function without ratio******
+else:
+    print("Something looks wrong.")
+    print("Please make sure to look at the README.txt to properly use this application.")
+
+
+# sample input:
+# ScrimmageData/01.txt

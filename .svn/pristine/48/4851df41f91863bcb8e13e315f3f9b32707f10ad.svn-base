@@ -1,0 +1,20 @@
+[
+    {
+        "rekognitionMeta": [
+            "ohio"
+        ],
+        "label": "OHIO"
+    },
+    {
+        "rekognitionMeta": [
+            "florida"
+        ],
+        "label": "FLORIDA"
+    },
+    {
+        "rekognitionMeta": [
+            "idaho"
+        ],
+        "label": "IDAHO"
+    }
+]

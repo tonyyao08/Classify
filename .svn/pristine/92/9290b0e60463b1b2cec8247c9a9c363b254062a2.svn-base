@@ -1,0 +1,14 @@
+
+Hello Professor,
+
+The major design decisions we incorporated in this version of our proposal were the following:
+
+- Switched to using a raspberry pi with an external camera
+
+- Offloaded our model onto a macOS EC2 instance. The mac instance would be able to build the coreML. 
+
+- We are providing a GUI interface on the raspberry pi and also an IOS app for users who may not have access to a desktop-mouse-keyboard environment. 
+
+Again we may change some of the connections depending on further research along the way but for now, we are confident in this approach. These changes should also concretize the acceptance tests which were admittedly difficult to calculate in the simulation environment we were attempting in our previous version.
+
+We hope this new design approach is more reasonable and we look forward to hearing from you! 

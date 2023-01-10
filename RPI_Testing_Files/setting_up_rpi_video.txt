@@ -1,0 +1,22 @@
+LINK TO TUTORIAL:
+https://www.tomshardware.com/how-to/stream-live-video-raspberry-pi
+^^helps set up video feed on RPI
+
+SAMPLE COMMANDS:
+Take picture: raspistill -o test.jpg
+^^takes test.jpg image and stores in current directory after 5 seconds
+
+
+Start video stream:
+raspivid -o - -t 0 -w 800 -h 600 -fps 12  | cvlc -vvv stream:///dev/stdin --sout '#rtp{sdp=rtsp://:8080/}' :demux=h264
+-o is our output, in this case set to none.
+-t is the length of the video clip, using zero will set this to infinite.
+-w and -h are the width and height of the video, in this case 800 x 600.
+-fps are the frames per second for the video stream, a lower value should minimize dropouts.
+| cvlc is a pipe which takes the output from the raspivid command, our video stream and streams the video using an h264 codec via real time streaming protocol (rtsp) over our network.
+
+
+Now, on PC/Mac:
+open up VLC player, enter URL: rtsp://10.0.0.54:8080/
+-stream now starts working with a 5 second delay
+

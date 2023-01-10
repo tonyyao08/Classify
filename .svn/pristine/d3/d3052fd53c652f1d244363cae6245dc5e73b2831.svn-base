@@ -1,0 +1,34 @@
+<ng-container *ngIf="latestImage | async as image; else noImages">
+  <h3>LATEST UPLOAD</h3>
+  <div class="viewbox">
+    <mat-card class="preview">
+      <img [src]="image.base64 | async | safeResource">
+    </mat-card>
+    <mat-card class="label">
+      Classified Label: <strong>{{image.image.label}}</strong>
+    </mat-card>
+  </div>
+
+
+</ng-container>
+
+<ng-template #noImages>
+  <h3>No images yet</h3>
+</ng-template>
+
+<ng-container>
+  <div class="viewbox">
+    <mat-card class="system-info">
+      <h4><b>System Info</b></h4>
+      <p>Configured Labels:</p>
+      <ul>
+        <li *ngFor="let label of labels | async">{{ label }}</li>
+      </ul>
+
+      <p>History (latest first)</p>
+      <ul>
+        <li *ngFor="let label of history | async">{{ label }}</li>
+      </ul>
+    </mat-card>
+  </div>
+</ng-container>

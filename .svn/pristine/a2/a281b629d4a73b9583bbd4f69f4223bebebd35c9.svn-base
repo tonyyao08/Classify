@@ -1,0 +1,43 @@
+import { Component, OnInit, ViewChild } from '@angular/core';
+import {MatAccordion} from '@angular/material/expansion';
+
+
+@Component({
+  selector: 'app-monitoring',
+  templateUrl: './monitoring.component.html',
+  styleUrls: ['./monitoring.component.scss']
+})
+export class MonitoringComponent implements OnInit {
+  @ViewChild(MatAccordion) accordion: MatAccordion = new MatAccordion;
+
+  currentMode: string = 'train';
+  
+  images = ["img_001.jpg", 
+  "img_002.jpg", 
+  "img_003.jpg", 
+  "img_004.jpg", 
+  "img_005.jpg", 
+  "img_006.jpg",
+  "img_007.jpg",
+  "img_008.jpg",
+  "img_009.jpg",
+  "img_010.jpg"]
+
+  labels = ["Label 1", 
+  "Label 2", 
+  "Label 3", 
+  "Label 4", 
+  "Label 5", 
+  "Unspecified Images"]
+  
+  // Should retrieve number of images that the model has been trained on so far
+  get numberOfImagesTrained(){
+    return 10
+  }
+  
+  constructor() { }
+
+  ngOnInit(): void {
+  }
+
+}

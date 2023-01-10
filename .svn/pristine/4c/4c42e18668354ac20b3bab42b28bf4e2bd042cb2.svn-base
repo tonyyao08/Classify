@@ -1,0 +1,46 @@
+import { Component, Input, OnInit } from '@angular/core';
+import { Bucket } from '@aws-sdk/client-s3';
+import { StorageService } from 'src/app/core/storage.service';
+import { DatabaseService } from 'src/app/core/database.service';
+import { Project } from 'src/models';
+
+interface Food {
+  value: string;
+  viewValue: string;
+}
+
+@Component({
+  selector: 'app-settings',
+  templateUrl: './settings.component.html',
+  styleUrls: ['./settings.component.scss']
+})
+
+export class SettingsComponent implements OnInit {
+  @Input()
+  project!: Project;
+
+  data: Bucket[] | undefined = undefined;
+  constructor(private storageService: StorageService, private database: DatabaseService) {}
+
+  ngOnInit(): void {
+    this.storageService.listStorageBuckets().then(data => {
+      this.data = data;
+      console.log(this.data);
+    });
+  }
+
+  createBucket() {
+    this.storageService.createBucket(this.project.projectName!).then(bucket => {
+      if (bucket && bucket.Location) {
+        this.database.updateProject(this.project, {imageBucket: bucket.Location});
+      }
+    });
+  }
+  // TODO: Loop through data to display available S3 Buckets
+
+  foods: Food[] = [
+    {value: 'steak-0', viewValue: 'Steak'},
+    {value: 'pizza-1', viewValue: 'Pizza'},
+    {value: 'tacos-2', viewValue: 'Tacos'},
+  ];
+}

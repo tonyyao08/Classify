@@ -1,0 +1,7 @@
+<p>TODO: Verify the user has inputted the correct connection settings. Provide a UI for looking at the current consumed
+    image as well as the metadata returned from Rekognition text detection.</p>
+<div class="viewbox" *ngIf="latestImage | async as image">
+    <mat-card>
+        <img [src]="image.base64 | async | safeResource">
+    </mat-card>
+</div>

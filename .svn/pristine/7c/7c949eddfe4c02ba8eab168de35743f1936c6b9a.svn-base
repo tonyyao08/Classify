@@ -1,0 +1,53 @@
+TEAM classify	___ / 100
+
+FINAL PROJECT DELIVERABLE
+        (Each entry below is 0-X scale of disagree to agree that your deliverables 
+	 persuade me on the given criteria. To illustrate, a system might technically 
+	 be buildable, but if your delivery doesn't show evidence of it as such, or 
+	 if I can't build/install it, then I have no basis to agree with an assertion 
+	 about "buildable."  Obviously, this rubric heavily rewards products that are
+	 evidencing successful use in hands of product owners and customers.)
+
+
+	CRITERION: "We met the terms of the assignment."
+
+__/10   Cost report clearly organizes data that trace; observations are reasonable and supported;
+        cost differences with estimate realistically explained.
+
+__/10   Full project submitted, buildable, usable, includes advertisement and documentation.
+
+
+	CRITERION: "It does what we said."
+
+__/10   Test plan was followed as proposed/amended; test report evidences appropriate organization,
+        traceability and workmanship; test report reaches a valid conclusion based on observations.
+
+
+	CRITERION: "It does what we meant (and solves the problem.)"
+
+__/30   Product functionality reflects sound user-centered decisions on details; product
+        captures the spirit (or solves the problem) of the project as assigned.
+
+__/20   Product is robust and reflects improvements based on opportunities discovered during 
+        acceptance testing; addresses gaps or issues that may have been flagged during the CDR; 
+	submitted materials evidence a product of quality that we can deploy with justifiable 
+	confidence in its likely success.
+
+
+	CRITERION: "We employed sound practices."
+
+__/10   Repo organization is cohesive, managed and supports quality-oriented development practices 
+        (allows reliable tracking of dependencies, productivity and quality metrics.)
+
+__/10   Code base evidences professional and sustainable craftsmanship; terms of IP obligations
+        followed.
+
+
+
+Cover sheet checked:			  	  _
+Product is delivered and generating value: 	  _
+Cost:   projected ___, actual ___
+
+
+NOTES:
+

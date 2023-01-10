@@ -1,0 +1,49 @@
+﻿Plan for Testing ImageAI ML Solution on Coin Dataset
+Team Members: Kevin Song, Tony Yao, Aal Ali
+
+
+Official documentation: https://imageai.readthedocs.io/en/latest/
+Official github: https://github.com/OlafenwaMoses/ImageAI/
+
+
+Ask Prof. if we can ask him to install dependencies so we don’t need to do everything through VM?
+
+
+Install dependencies on VM - Done in ImageAI Dir
+Documentation has example code in Python3, pre installed on VM 
+
+
+First Step: Test Image Classification Accuracy
+
+
+METHOD 1: Run predictions using pre built models (easy and fast)
+
+
+Link below shows how we can perform a single image prediction and there are 4 pre-built models to try out (check if allowed?)
+https://github.com/OlafenwaMoses/ImageAI/blob/master/imageai/Classification/README.md
+
+
+METHOD 2: Run predictions using custom models (hard and slow)
+… may take hours to train and it’s recommended we have 500 or more images for each object we want to train, 1000 is optimal amount)
+
+
+Link below gives detailed example on how we can train our own custom models
+https://github.com/OlafenwaMoses/ImageAI/blob/master/imageai/Classification/CUSTOMTRAINING.md
+
+
+Idea for generating more images: augment dataset
+Ex. 
+Take the original image of a coin, turn it into 25 slightly different images by rotating the coin by some x degrees. 
+Repeat for the image of the back of the coin. 
+This will allow us to take 50 different images of one coin, and then we just need 10-20 different images per coin. 
+(Can add other methods of augmentation?)
+Second Step: Try built-in Object Detection Training
+Pretty much the whole parts classifier problem can be solved by training our model to detect objects in images or a video.
+
+
+METHOD 1: Train for object detection on images
+https://github.com/OlafenwaMoses/ImageAI/blob/master/imageai/Detection/Custom/CUSTOMDETECTIONTRAINING.md
+
+
+METHOD 2: Train for object detection on videos
+https://github.com/OlafenwaMoses/ImageAI/blob/master/imageai/Detection/Custom/CUSTOMVIDEODETECTION.md

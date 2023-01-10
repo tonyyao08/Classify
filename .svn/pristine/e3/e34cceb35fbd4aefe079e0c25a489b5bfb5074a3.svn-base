@@ -1,0 +1,485 @@
+{
+  "cells": [
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "ylD7Ip2TkCx3",
+        "outputId": "5b1a9cef-0931-4a85-86ca-5346b42e9aed"
+      },
+      "outputs": [],
+      "source": [
+        "#need to install the following packages using pip or pip3:\n",
+        "# pip3 install beautifulsoup4\n",
+        "# pip3 install numpy\n",
+        "# pip3 install cv2"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "T5h0sNbXTUD2"
+      },
+      "source": [
+        "#Testing"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "2m9MSoNPTOWU"
+      },
+      "source": [
+        "#Actual Functions to change things"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 1,
+      "metadata": {
+        "id": "UHOeU4FO1O-U"
+      },
+      "outputs": [],
+      "source": [
+        "#function for reading xml file and return the class from it \n",
+        "from bs4 import BeautifulSoup as bs\n",
+        "import re\n",
+        "import numpy as np\n",
+        "import cv2\n",
+        "import os\n",
+        "import shutil\n",
+        "\n",
+        "def xml_to_class(filepath):\n",
+        "  #<name>quarter</name>\n",
+        "  with open(filepath, 'r') as f:\n",
+        "    data = f.read()\n",
+        "\n",
+        "  Bs_data = bs(data, \"xml\")\n",
+        "  tagline = str(Bs_data.find('name'))\n",
+        "  m = re.match(r\"^<name>([A-za-z\\d ]+)</name>$\", tagline)\n",
+        "  class_val = m.group(1)\n",
+        "\n",
+        "  if class_val and class_val == \"1 dollar\":\n",
+        "    class_val = \"dollar\"\n",
+        "  \n",
+        "  if class_val:\n",
+        "    return class_val\n",
+        "  else:\n",
+        "    return \"Unknown\"\n",
+        "# xml_to_class(training_path)\n",
+        "################################################\n",
+        "def rotated(A,angle):\n",
+        "#rotates the point A by the degrees given\n",
+        "#angle = 0-360\n",
+        "  theta = np.radians(angle)\n",
+        "  c, s = np.cos(theta), np.sin(theta)\n",
+        "  R = np.array(((c, -s), (s, c)))\n",
+        "  A = [0,1]\n",
+        "  rotated_A = A @ R.T\n",
+        "  return np.around(rotated_A)\n",
+        "  \n",
+        "  # print(A)\n",
+        "  # print(np.around(rotated_A))\n",
+        "###################################################################################\n",
+        "def filenames_in(source,jpg):\n",
+        "  #if jpg = true, just return the list of jpg files in the folder\n",
+        "  path, dirs, files = next(os.walk(source))\n",
+        "  lst = []\n",
+        "  if jpg:\n",
+        "    for f in files:\n",
+        "      m = re.match(r\"^([A-za-z\\d]+).jpg$\", f)\n",
+        "      if m:\n",
+        "        lst.append(m.group(1))\n",
+        "    return lst\n",
+        "\n",
+        "  return files\n",
+        "###################################################################################\n",
+        "def make_folders(folder_names_list,parent_path):\n",
+        "  #folders = [\"penny\",\"nickel\",\"dime\",\"quarter\",\"dollar\",\"Unknown\"]\n",
+        "  for f in folder_names_list:\n",
+        "    path = parent_path + f\n",
+        "    try:\n",
+        "        os.mkdir(path)\n",
+        "    except OSError:\n",
+        "        print (f\"Could not create {path}\")\n",
+        "    else:\n",
+        "        print (\"Successfully created the directory %s \" % path)\n",
+        "###################################################################################\n",
+        "def remove_all_folders(folder_path):\n",
+        "      shutil.rmtree(folder_path)\n",
+        "###################################################################################\n",
+        "##Reorganizing the JPGs into proper label buckets\n",
+        "def folder_to_label_buckets(from_folder,to_parent_folder):\n",
+        "  file_names_list = filenames_in(from_folder,jpg = True)\n",
+        "\n",
+        "  new_file_count = 0\n",
+        "  folder = \"Unknown\"\n",
+        "  for f in file_names_list:\n",
+        "    img_path = f\"{from_folder}{f}.jpg\"\n",
+        "    xml_path = f\"{from_folder}{f}.xml\"\n",
+        "    try:\n",
+        "          img = Image.open(img_path) \n",
+        "    except Exception:\n",
+        "          print(f\"folder to label failed to place img: {i}\")\n",
+        "    folder = xml_to_class(xml_path)  \n",
+        "    #print(f\"img {i} goes in {folder}\")\n",
+        "    img_save_path = f\"{to_folder}{folder}/{f}.jpg\"\n",
+        "    shutil.copyfile(img_path, img_save_path)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "NkHcdYPRVjpn"
+      },
+      "source": [
+        "#Given a folder, takes all the jpg files and creates 10 additional versions of each and saves them in the folder you choose"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 2,
+      "metadata": {
+        "id": "ql4bMFXzaG0g"
+      },
+      "outputs": [],
+      "source": [
+        "#go through all image files in a folder \n",
+        "from PIL import Image \n",
+        "import os\n",
+        "import shutil\n",
+        "import numpy as np\n",
+        "from random import seed\n",
+        "from random import random\n",
+        "\n",
+        "#if xml is true then it will also copy the xml files wherever the jpg files are\n",
+        "#going\n",
+        "def rot_images(num_times, from_folder, to_folder,xml):\n",
+        "\n",
+        "  file_names_list = filenames_in(from_folder,jpg = True)\n",
+        "\n",
+        "  folder = \"rand\"\n",
+        "  new_file_count = 0\n",
+        "\n",
+        "  for f in file_names_list:\n",
+        "    img_path = f\"{from_folder}{f}.jpg\"\n",
+        "    xml_path = f\"{from_folder}{f}.xml\"  \n",
+        "    try:\n",
+        "          img = Image.open(img_path) \n",
+        "    except Exception:\n",
+        "          print(f\"failed to open img: {i}\")\n",
+        "\n",
+        "    #copy the original image to the desired folder\n",
+        "    img_save_path = f\"{to_folder}IMG_{new_file_count}.jpg\"\n",
+        "    shutil.copyfile(img_path, img_save_path)\n",
+        "    if xml:\n",
+        "      #also copy the xml file cooresponding with this image\n",
+        "      xml_save_path = f\"{to_folder}IMG_{new_file_count}.xml\"\n",
+        "      shutil.copyfile(xml_path,xml_save_path)\n",
+        "    #added 2 new files\n",
+        "    new_file_count += 1\n",
+        "\n",
+        "    angles = np.linspace(0,300,num_times)\n",
+        "    angles = np.around(angles)\n",
+        "    #build the angle buckets\n",
+        "    seed()\n",
+        "    for i in range(len(angles)):\n",
+        "      r = round(10*random())\n",
+        "      angles[i] += r\n",
+        "\n",
+        "    for x in angles:\n",
+        "      rot_img = img.rotate(x)\n",
+        "      img_save_path = f\"{to_folder}IMG_{new_file_count}.jpg\"\n",
+        "      rot_img.save(img_save_path)\n",
+        "      if xml:\n",
+        "        #also copy the xml file cooresponding with this image\n",
+        "        xml_save_path = f\"{to_folder}IMG_{new_file_count}.xml\"\n",
+        "        shutil.copyfile(xml_path, xml_save_path)\n",
+        "        #added 2 new files, jpg and xml\n",
+        "      new_file_count += 1"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "vXBymabLaYJu"
+      },
+      "source": [
+        "#Cropping images in a folder"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 4,
+      "metadata": {
+        "id": "q66UyCciX8T7"
+      },
+      "outputs": [],
+      "source": [
+        "import cv2\n",
+        "import numpy as np\n",
+        "import math\n",
+        "\n",
+        "def show_image(image):\n",
+        "    cv2.imshow(image)\n",
+        "    # c = cv2.waitKey()\n",
+        "    # if c >= 0 : return -1\n",
+        "    # return 0\n",
+        "\n",
+        "def save_cropped_img(img_path,save_path,write,margin_ratio):\n",
+        "  #if write == true, it will write over the image to save_path\n",
+        "  og_image = cv2.imread(img_path)\n",
+        "  img_gray = cv2.cvtColor(og_image, cv2.COLOR_BGR2GRAY)\n",
+        "  \n",
+        "  sz = 5\n",
+        "  kernel = np.ones((sz,sz),np.float32)/(sz**2)\n",
+        "  img_gray = cv2.filter2D(img_gray,-1,kernel)\n",
+        "\n",
+        "  #ret, im = cv2.threshold(img_gray, 100, 255, cv2.THRESH_BINARY_INV)\n",
+        "  ret, thresh_img = cv2.threshold(img_gray, 88, 255, cv2.THRESH_BINARY_INV)\n",
+        "  sz = 5\n",
+        "  kernel = np.ones((sz,sz),np.float32)/(sz**2)\n",
+        "  thresh_img = cv2.filter2D(thresh_img,-1,kernel)\n",
+        "\n",
+        "  cnt, hierarchy = cv2.findContours(thresh_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)\n",
+        "  #res_img = cv2.drawContours(thresh_img, cnt,-1, (255,255,255), 2)\n",
+        "  #get the largest contour by area\n",
+        "  mx = 0\n",
+        "  largest_cnt = 0\n",
+        "  for c in cnt:\n",
+        "    area = cv2.contourArea(c)\n",
+        "    if mx < area:\n",
+        "      mx = area\n",
+        "      largest_cnt = c\n",
+        "\n",
+        "  #x,y is the top coordinate\n",
+        "  x,y,w,h = cv2.boundingRect(largest_cnt)\n",
+        "  \n",
+        "  #scale the box size a bit bigger\n",
+        "  r = math.sqrt(w**2 + h**2)\n",
+        "  margin = int(r*margin_ratio)\n",
+        "  # print(f\"r = {r} margin = {margin}\")\n",
+        "  # print(f\"x = {x} y = {y} w = {w} h = {h}\")\n",
+        "  w = w+margin\n",
+        "  h = h+margin\n",
+        "  #1 - 2\n",
+        "  #3 - 4\n",
+        "  im_height_index = og_image.shape[0] - 1\n",
+        "  im_width_index = og_image.shape[1] - 1\n",
+        "\n",
+        "  xabove = max(x - margin,0)\n",
+        "  xbelow = min(x+w,im_width_index)\n",
+        "\n",
+        "  yabove = max(y - margin,0)\n",
+        "  ybelow = min(y+h,im_height_index)\n",
+        "\n",
+        "  box_rows_cols = (yabove,ybelow, xabove,xbelow)\n",
+        "  #print(f\"x_above = {xabove}\\n x_below = {xbelow}\\n y_below = {ybelow}\\n y_above = {yabove}\\n\")\n",
+        "  #this actually draws a bounding box around the coin\n",
+        "  #res_img = cv2.rectangle(thresh_img,(xabove,yabove),(xbelow,ybelow),(255,255,255),5)\n",
+        "  cropped_image = og_image[yabove:ybelow, xabove:xbelow]\n",
+        "  #cv2_imshow(cropped_image)\n",
+        "  #cv2_imshow(cropped_image)\n",
+        "  if write:\n",
+        "    cv2.imwrite(save_path, cropped_image)\n",
+        "  return cropped_image\n",
+        "\n",
+        "################################################\n",
+        "def crop_all_images_in_folder(from_folder, to_folder,xml,margin_ratio):\n",
+        "#if xml == True, then copy the xml files to that folder as well\n",
+        "#margin ratio of about .4 is good\n",
+        "  file_names_list = filenames_in(from_folder,jpg = True)\n",
+        "  for f in file_names_list:\n",
+        "    img_path = f\"{from_folder}{f}.jpg\" \n",
+        "    #copy the original image to the desired folder\n",
+        "    img_save_path = f\"{to_folder}{f}.jpg\"\n",
+        "    cropped = save_cropped_img(img_path,img_save_path,write = True, margin_ratio = .3)\n",
+        "    if xml == True:\n",
+        "      xml_path = f\"{from_folder}{f}.xml\"\n",
+        "      xml_save_path = f\"{to_folder}{f}.xml\"\n",
+        "      shutil.copyfile(xml_path, xml_save_path)\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "bxT3wMhNXvLz"
+      },
+      "source": [
+        "#Set up directory structure\n",
+        "need to be in the same folder as Coin_Images_labels"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 23,
+      "metadata": {
+        "id": "yBE9D8w9rNmO"
+      },
+      "outputs": [],
+      "source": [
+        "#if you want to delete new_dir and start over \n",
+        "dot_slash = \"./\"\n",
+        "new_dir_path = dot_slash + \"new_dir/\"\n",
+        "remove_all_folders(new_dir_path)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 25,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "y46poGtWMNVI",
+        "outputId": "cae48b53-34e8-4d15-adf2-8521d460bf6b"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "Successfully created the directory /content/drive/MyDrive/ColabNotebooks/Coins/new_dir/test_dir/test_rot \n",
+            "Successfully created the directory /content/drive/MyDrive/ColabNotebooks/Coins/new_dir/test_dir/test_cropped \n",
+            "Successfully created the directory /content/drive/MyDrive/ColabNotebooks/Coins/new_dir/test_dir/test_folders \n",
+            "Successfully created the directory /content/drive/MyDrive/ColabNotebooks/Coins/new_dir/test_dir/test_folders/penny \n",
+            "Successfully created the directory /content/drive/MyDrive/ColabNotebooks/Coins/new_dir/test_dir/test_folders/nickel \n",
+            "Successfully created the directory /content/drive/MyDrive/ColabNotebooks/Coins/new_dir/test_dir/test_folders/dime \n",
+            "Successfully created the directory /content/drive/MyDrive/ColabNotebooks/Coins/new_dir/test_dir/test_folders/quarter \n",
+            "Successfully created the directory /content/drive/MyDrive/ColabNotebooks/Coins/new_dir/test_dir/test_folders/dollar \n",
+            "Successfully created the directory /content/drive/MyDrive/ColabNotebooks/Coins/new_dir/test_dir/test_folders/Unknown \n"
+          ]
+        }
+      ],
+      "source": [
+        "#Set Up proper directory structure\n",
+        "#need to be in the same folder as Coin_Images_labels\n",
+        "#Create One folder where everything is located\n",
+        "\n",
+        "dot_slash = \"./\"\n",
+        "\n",
+        "new_dir_path = dot_slash + \"new_dir/\"\n",
+        "\n",
+        "#if you want to recursively delete new_dir, run: remove_all_folders(new_dir_path)\n",
+        "if not os.path.isdir(new_dir_path):\n",
+        "  os.mkdir(new_dir_path)\n",
+        "\n",
+        "#remake directory structure:\n",
+        "base = \"test\"\n",
+        "#top_level is the folder where we will do everything\n",
+        "top_level = f\"{new_dir_path}{base}_dir/\"\n",
+        "#first remove all files in new_dir if there are any\n",
+        "if os.path.isdir(top_level):\n",
+        "  # delete all folders in the top_level directory\n",
+        "  remove_all_folders(top_level)\n",
+        "else:\n",
+        "  os.mkdir(top_level)\n",
+        "\n",
+        "#create main_folders\n",
+        "dir_folders = [f\"{base}_rot\",f\"{base}_cropped\",f\"{base}_folders\"]\n",
+        "make_folders(dir_folders,top_level)\n",
+        "\n",
+        "#create label_folders\n",
+        "folders = [\"penny\",\"nickel\",\"dime\",\"quarter\",\"dollar\",\"Unknown\"]\n",
+        "label_folders_parent = f\"{top_level}{base}_folders/\"\n",
+        "\n",
+        "make_folders(folders,label_folders_parent)\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "3RALXEdPqQl_"
+      },
+      "source": [
+        "Need to be in the same folder as Coin_Images_labels\n",
+        "This is how the images get transfered over after transformations"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "NhES8h5I_BGz",
+        "outputId": "363ec9c3-7f83-4d4d-fda5-a412ce027226"
+      },
+      "outputs": [],
+      "source": [
+        "#need to be in the same folder as Coin_Images_labels\n",
+        "# use Coin_Images_Labels/test/train => \n",
+        "#   => test_cropped/train_cropped\n",
+        "#     => test_rot/train_rot  \n",
+        "#       => test_folders/train_folders\n",
+        "\n",
+        "base = \"test\"\n",
+        "\n",
+        "dot_slash = \"./\"\n",
+        "\n",
+        "new_dir_path = dot_slash + \"new_dir/\"\n",
+        "#all the files will go into the top_level folder = \n",
+        "top_level = f\"{new_dir_path}{base}_dir/\"\n",
+        "#the source of the pics along with xml files \n",
+        "pics_source = f\"{dot_slash}Coin_Images_Labels/{base}/\"\n",
+        "\n",
+        "#pics source => crop => rotate/create more => and then bucket\n",
+        "\n",
+        "#---------   Crop Images   ---------------#\n",
+        "from_folder = f\"{pics_source}\"\n",
+        "to_cropped_folder = f\"{top_level}{base}_cropped/\"\n",
+        "\n",
+        "print(f\"Cropping Images in {from_folder} and placing them in {to_cropped_folder}\\n\")\n",
+        "#xml = true means that it will copy over the xml files as well\n",
+        "#margin_ratio = margin of how big the box will be \n",
+        "# as a ratio of the bounding box's hypotenuse\n",
+        "crop_all_images_in_folder(from_folder, to_cropped_folder,xml = True,margin_ratio = .4)\n",
+        "\n",
+        "#---------   Rotate  Images   ---------------#\n",
+        "from_folder = to_cropped_folder\n",
+        "to_rot_folder = f\"{top_level}{base}_rot/\"\n",
+        "\n",
+        "print(f\"Rotating Images in {from_folder} and placing them in {to_rot_folder}\\n\")\n",
+        "#xml = true means that it will copy the xml files over as well\n",
+        "rot_images(10, from_folder, to_rot_folder,xml=True)\n",
+        "\n",
+        "#---------   Bucket Images   ---------------#\n",
+        "#parent folder has label folders in it\n",
+        "from_folder = to_rot_folder\n",
+        "to_folder = f\"{top_level}{base}_folders/\"\n",
+        "print(f\"Bucketting Images in {from_folder} and placing them in {to_folder}\")\n",
+        "folder_to_label_buckets(from_folder,to_folder)\n",
+        "\n"
+      ]
+    }
+  ],
+  "metadata": {
+    "colab": {
+      "collapsed_sections": [],
+      "name": "directrory_resturcture.ipynb",
+      "provenance": []
+    },
+    "kernelspec": {
+      "display_name": "Python 3",
+      "name": "python3"
+    },
+    "language_info": {
+      "codemirror_mode": {
+        "name": "ipython",
+        "version": 3
+      },
+      "file_extension": ".py",
+      "mimetype": "text/x-python",
+      "name": "python",
+      "nbconvert_exporter": "python",
+      "pygments_lexer": "ipython3",
+      "version": "3.9.10"
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 0
+}

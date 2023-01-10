@@ -1,0 +1,14 @@
+[
+  {
+    "label": {
+      "name": "New York",
+      "matchingText": ["new", "york"]
+    }
+  },
+  {
+    "label": {
+      "name": "Wisconsin",
+      "matchingText": ["wisconsin"]
+    }
+  }
+]

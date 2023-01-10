@@ -1,0 +1,33 @@
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { DatabaseService } from 'src/app/core/database.service';
+import { Project } from 'src/models';
+
+@Component({
+  selector: 'app-overview',
+  templateUrl: './overview.component.html',
+  styleUrls: ['./overview.component.scss']
+})
+export class OverviewComponent implements OnInit {
+
+  id: string | null = null;
+  project: Project | undefined = undefined;
+
+  constructor(private route: ActivatedRoute, private database: DatabaseService, private router: Router) { }
+
+  ngOnInit(): void {
+    this.id = this.route.snapshot.paramMap.get('id');
+    if (this.id) {
+      this.database.getProjectByID(this.id).then(project => {
+        this.project = project;
+      })
+    }
+  }
+
+  deleteProject() {
+    this.database.deleteProject(this.project!).then(() => {
+      this.router.navigate(['/']);
+    });
+  }
+
+}

@@ -1,0 +1,28 @@
+import { Component, Input, OnInit } from '@angular/core';
+import { FormBuilder } from '@angular/forms';
+import { DomSanitizer } from '@angular/platform-browser';
+import { DataStore } from 'aws-amplify';
+import { map, Observable } from 'rxjs';
+import { DatabaseService } from 'src/app/core/database.service';
+import { Image, Project } from 'src/models';
+
+@Component({
+  selector: 'app-training',
+  templateUrl: './training.component.html',
+  styleUrls: ['./training.component.scss']
+})
+export class TrainingComponent implements OnInit {
+
+  @Input()
+  project!: Project;
+
+  latestImage?: Observable<{ base64: Promise<string>; image: Image }>;
+
+  constructor(private database: DatabaseService, private sanitizer: DomSanitizer) { }
+
+  ngOnInit(): void {
+    this.latestImage = this.database.observeLatestImages(this.project).pipe(map(images => images[0]));
+  }
+
+
+}

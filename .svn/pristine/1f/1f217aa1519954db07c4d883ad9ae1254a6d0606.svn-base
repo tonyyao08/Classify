@@ -1,0 +1,15 @@
+.project-info {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+
+    h2 {
+        margin-bottom: 0;
+    }
+
+    .project-actions {
+        button {
+            margin-bottom: 10px;
+        }
+    }
+}

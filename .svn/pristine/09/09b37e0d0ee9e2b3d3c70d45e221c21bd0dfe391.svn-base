@@ -1,0 +1,30 @@
+mat-toolbar {
+    z-index: 2;
+}
+
+.sidenav {
+    min-width: 200px;
+}
+
+.spacer {
+    flex: 1 0 0;
+}
+
+.user {
+    font-size: 14px;
+}
+
+.container {
+    display: flex;
+    height: 100vh;
+    flex-direction: column;
+
+    .drawer-container {
+        height: 100%;
+        overflow: scroll;
+    }
+    
+    .sidenav-content {
+        padding: 20px 20px 0 20px;
+    }
+}

@@ -1,0 +1,79 @@
+import { Injectable } from '@angular/core';
+import { S3Client, CreateBucketCommand, GetObjectCommand, GetObjectCommandInput, GetObjectCommandOutput, ListBucketsCommand, Bucket, CreateBucketCommandOutput } from "@aws-sdk/client-s3"
+import { Auth, Hub } from 'aws-amplify';
+import awsconfig from '../../aws-exports';
+const REGION = "us-east-1"
+
+@Injectable({
+  providedIn: 'root'
+})
+
+export class StorageService {
+
+  client?: S3Client;
+
+  constructor() { }
+
+  async configureClient(): Promise<S3Client> {
+    const credentials = await Auth.currentCredentials();
+    return new S3Client({ region: awsconfig.aws_project_region, credentials: Auth.essentialCredentials(credentials) });
+  }
+
+  async getImageData(bucket: string, key: string): Promise<string> {
+    this.client = await this.configureClient();
+    const input: GetObjectCommandInput = {
+      'Key': key,
+      'Bucket': bucket
+    };
+    const command = new GetObjectCommand(input);
+    return this.client.send(command).then(async (res: GetObjectCommandOutput) => {
+      const stream: ReadableStream<Uint8Array> = res.Body as ReadableStream<Uint8Array>;
+      return `data:image/jpg;base64,${await this.encode(stream)}`;
+    });
+  }
+
+  async encode(stream: ReadableStream<Uint8Array>) {
+    const data: Uint8Array = await this.getBytesArray(stream);
+    let str = data.reduce((a, b) => { return a + String.fromCharCode(b) }, '');
+    return btoa(str).replace(/.{76}(?=.)/g, '$&\n');
+  }
+
+  async getBytesArray(stream: ReadableStream<Uint8Array>): Promise<Uint8Array> {
+    const result: Uint8Array[] = [];
+    const reader = stream.getReader();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        const length = result.reduce((acc, curr) => acc + curr.length, 0);
+        const fullArray = new Uint8Array(length);
+        let offset = 0;
+        result.forEach(item => {
+          fullArray.set(item, offset);
+          offset += item.length;
+        });
+        return fullArray;
+      }
+      if (value) {
+        result.push(value);
+      }
+
+    }
+  }
+
+  async listStorageBuckets(): Promise<Bucket[] | undefined> {
+    this.client = await this.configureClient();
+    try {
+      const data = await this.client.send(new ListBucketsCommand({}));
+      console.log(data);
+      return data.Buckets;
+    } catch (err) {
+      return [];
+    }
+  }
+
+  async createBucket(projectName: string): Promise<CreateBucketCommandOutput | undefined> {
+    const credentials = await Auth.currentCredentials();
+    this.client = new S3Client({ region: awsconfig.aws_project_region, credentials: Auth.essentialCredentials(credentials) });
+    return this.client.send(new CreateBucketCommand({ Bucket: projectName }));
+  }
+}

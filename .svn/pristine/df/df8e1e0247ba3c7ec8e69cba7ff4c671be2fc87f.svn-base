@@ -1,0 +1,14 @@
+<p>TODO: Create a step-by-step workflow to (1) create a new IoT Thing in AWS IoT core (2) Download the various IoT
+  policies and credentials. Download customized setup code for a Raspberry PI that is specificically configured to
+  connect to the correct S3 bucket attached to this project. </p>
+
+<!-- <h4>SELECT AN S3 BUCKET TO IMPORT FROM</h4>
+<mat-form-field appearance="fill">
+  <mat-label>S3 Bucket Select</mat-label>
+  <mat-select>
+    <mat-option *ngFor="let food of foods" [value]="food.value">
+      {{food.viewValue}}
+    </mat-option>
+  </mat-select>
+</mat-form-field> -->
+<button mat-stroked-button (click)="createBucket()" [disabled]="project.imageBucket">Create Bucket</button>

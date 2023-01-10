@@ -1,0 +1,45 @@
+.add-button {
+    padding-top: 10px;
+}
+
+.viewbox img {
+    height: 100%;
+    display: block;
+}
+
+.viewbox {
+    
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    mat-card {
+        height: 400px;
+    }
+}
+
+h3 {
+    display: block;
+    text-align: center;
+    font-size: 1.17em;
+    margin-top: 1em;
+    margin-bottom: 1em;
+    margin-left: 0;
+    margin-right: 0;
+    font-weight: bold;
+  }
+
+.form {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    text-area {
+        min-width: 300px;
+    }
+}
+
+.meta {
+    padding-top: 20px;
+}

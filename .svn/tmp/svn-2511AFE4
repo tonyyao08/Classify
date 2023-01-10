@@ -1,0 +1,49 @@
+import requests
+import json
+import pandas as pd
+
+apiKey = "da2-tkzuvhzfe5etrmisvfchmr7sia"
+
+query = """query {
+  listProjects {
+    items {
+      createdAt
+      id
+      imageBucket
+      isTraining
+      labels
+      owner
+      projectName
+      updatedAt
+    }
+  }
+}"""
+
+create_image_query = """mutation {
+  createImage(input: {imageKey: "", projectID: "", label: "", rekognitionMeta: ""}) {
+    id
+  }
+}"""
+
+url = 'https://ztgryu55q5hs3o6tff5lh3qovq.appsync-api.us-east-1.amazonaws.com/graphql'
+
+data = {"query": query}
+json_data = json.dumps(data)
+header = {'X-API-Key': apiKey}
+
+response = requests.post(url=url, headers=header, data=json_data)
+
+# print(r.status_code)
+# print(r.text)
+
+json_data = json.loads(response.text)
+
+print(json_data)
+
+
+#send
+
+url = 'https://ztgryu55q5hs3o6tff5lh3qovq.appsync-api.us-east-1.amazonaws.com/graphql'
+r = requests.post(url, data=query)
+
+r = requests.get('https://api.github.com/events')

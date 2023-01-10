@@ -1,0 +1,26 @@
+<annotation verified="yes">
+	<folder>train</folder>
+	<filename>IMG_3341.jpg</filename>
+	<path>C:\Users\andre\Documents\TensorFlow\workspace\training_demo\images\train\IMG_3341.jpg</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>2048</width>
+		<height>1536</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>dime</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>795</xmin>
+			<ymin>756</ymin>
+			<xmax>1224</xmax>
+			<ymax>1185</ymax>
+		</bndbox>
+	</object>
+</annotation>

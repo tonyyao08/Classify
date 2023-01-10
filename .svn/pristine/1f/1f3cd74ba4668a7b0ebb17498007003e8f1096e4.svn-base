@@ -1,0 +1,22 @@
+.project-info {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+
+    h2 {
+        margin-bottom: 0;
+    }
+
+    .project-actions {
+        width: 200px;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+
+        button {
+            margin-bottom: 10px;
+        }
+
+    }
+}

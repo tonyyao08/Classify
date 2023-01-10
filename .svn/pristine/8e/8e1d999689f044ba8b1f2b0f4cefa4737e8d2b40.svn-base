@@ -1,0 +1,38 @@
+import { ModelInit, MutableModel, PersistentModelConstructor } from "@aws-amplify/datastore";
+
+
+
+
+
+type ImageMetaData = {
+  readOnlyFields: 'createdAt' | 'updatedAt';
+}
+
+type ProjectMetaData = {
+  readOnlyFields: 'createdAt' | 'updatedAt';
+}
+
+export declare class Image {
+  readonly id: string;
+  readonly rekognitionMeta?: (string | null)[] | null;
+  readonly label?: string | null;
+  readonly projectID: string;
+  readonly imageKey?: string | null;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+  constructor(init: ModelInit<Image, ImageMetaData>);
+  static copyOf(source: Image, mutator: (draft: MutableModel<Image, ImageMetaData>) => MutableModel<Image, ImageMetaData> | void): Image;
+}
+
+export declare class Project {
+  readonly id: string;
+  readonly projectName?: string | null;
+  readonly imageBucket?: string | null;
+  readonly labels?: (string | null)[] | null;
+  readonly isTraining?: boolean | null;
+  readonly images?: (Image | null)[] | null;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+  constructor(init: ModelInit<Project, ProjectMetaData>);
+  static copyOf(source: Project, mutator: (draft: MutableModel<Project, ProjectMetaData>) => MutableModel<Project, ProjectMetaData> | void): Project;
+}

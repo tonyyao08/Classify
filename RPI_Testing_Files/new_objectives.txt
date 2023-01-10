@@ -1,0 +1,6 @@
+Sanjay Sharma, CMSC435 Sec. 0101
+-For creating startup file: 
+https://raspberrytips.com/autostart-a-program-on-boot/
+-For creating executable out of python file:
+https://openbookproject.net/thinkcs/python/english3e/app_c.html
+
